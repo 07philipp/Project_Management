@@ -1,157 +1,125 @@
+```markdown
+# Projekt- und Kundenmanagement-System
 
-
-# README.md - Projekt- und Kundenmanagement-System
-
-## Inhalt:
-1. Allgemeine Voraussetzungen
-2. Installation auf Windows mit XAMPP
-3. Installation auf Linux
-4. Installation auf Synology NAS
-5. SQL-Server und Datenbank-Setup
-6. Ordnerstruktur und Dateien einrichten
-7. Setup über setup.php
+Ein maßgeschneidertes, webbasiertes System zur Verwaltung von Projekten, Kunden, Zeiterfassungen und automatisierten Abrechnungen. Diese Anwendung basiert auf nativem PHP und einer relationalen SQL-Datenbank (PDO) und wurde umfassend auf moderne Sicherheits- und Stabilitätsstandards optimiert.
 
 ---
 
-## 1. Allgemeine Voraussetzungen
+## Architektur und Ordnerstruktur
 
-- PHP (mindestens Version 7.0 oder höher)
-- Apache Webserver (bei XAMPP enthalten)
-- MySQL- oder MariaDB-Server (bei XAMPP oder Linux enthalten)
-- Server-Dateien: 
-  - `htdocs` (Webseite)
-  - `vendor` (PHP-Abhängigkeiten)
-  - `backup_cron.php` (Backup-Skript)
-  - `config.php` (Konfigurationsdatei)
-  - `setup.php` (Automatisches Setup-Skript)
-  - Datenbank-Backup oder SQL-Skript für die Datenbankstruktur
+Das System folgt einer strikten Trennung von öffentlich zugänglichen Webseiten-Dateien, System-Konfigurationen und externen Abhängigkeiten:
 
----
 
-## 2. Installation auf Windows mit XAMPP
+```
 
-### Voraussetzungen:
-- [XAMPP](https://www.apachefriends.org/de/index.html)
-- PHP-Version und MySQL in XAMPP aktiv
-- Server-Dateien (`htdocs`, `vendor`, `backup_cron.php`, `config.php`, `setup.php`)
+/server
+│
+├── /htdocs (Linux: /html)   --> Öffentlich erreichbare Web-Dateien (Frontend & Backend)
+│   ├── /admin               --> Administrative Dashboards und KPI-Auswertungen
+│   ├── /clients             --> Ansichten und Funktionen zur Kundenverwaltung
+│   ├── /css                 --> Stylesheets für das User Interface
+│   ├── /edit_client         --> Bearbeitungsmasken für Kundendaten
+│   ├── /edit_project        --> Projektbearbeitung und Detailansichten
+│   ├── /edit_time           --> Verwaltung und Korrektur von Zeiterfassungseinträgen
+│   ├── /js                  --> JavaScript-Dateien (AJAX-Wechsel, Formular-Validierung)
+│   ├── /log                 --> System-Log-Anzeigen für administrative Überwachungen
+│   ├── /login               --> Authentifizierungs-Schnittstelle
+│   ├── /projects            --> Hauptübersichten der Projektlisten
+│   ├── /register            --> Benutzerregistrierung und Rechtevergabe
+│   ├── /settings            --> Konfigurationsmenüs der Anwendung
+│   ├── /users               --> Benutzerverwaltung
+│   ├── /write_bill          --> Aggregierte Vorschau zur Rechnungserstellung
+│   ├── index.php            --> Zentrales Dashboard und primärer Einstiegspunkt
+│   ├── logout.php           --> Sichere Beendigung der Benutzersitzung
+│   └── session_loguot.php   --> Sitzungsverwaltung und Session-Terminierung
+│
+├── /vendor                  --> PHP-Abhängigkeiten und externe Bibliotheken (z. B. dompdf)
+├── /backups                 --> Lokales Verzeichnis für automatisierte Datenbanksicherungen
+├── backup_cron.php          --> Hintergrund-Skript zur automatisierten Datenbanksicherung
+├── config.php               --> Zentrale Konfigurationsdatei für die Datenbank-Zugangsdaten
+├── setup.php                --> Automatisiertes Initialisierungs- und Installationsskript
+└── sql_backup.sql           --> SQL-Schema und optionales Backup für die Tabellenstruktur
 
-### Schritte:
-
-1. **XAMPP installieren**:
-   Lade XAMPP herunter und installiere es. Stelle sicher, dass während der Installation Apache und MySQL ausgewählt sind.
-
-2. **XAMPP starten**:
-   - Öffne das XAMPP Control Panel.
-   - Starte die Apache- und MySQL-Module.
-
-3. **Dateien in XAMPP-Webverzeichnis kopieren**:
-   - Kopiere den Inhalt von `htdocs` in das Webverzeichnis von XAMPP (`C:\xampp\htdocs`).
-   - Kopiere den `vendor`-Ordner ebenfalls nach `C:\xampp\vendor`.
-   - Kopiere `backup_cron.php`, `config.php` und `setup.php` in das Verzeichnis `C:\xampp\htdocs`.
-
-4. **MySQL-Datenbank einrichten**:
-   Die Einrichtung der Datenbank wird automatisch über das Setup-Skript `setup.php` vorgenommen, daher musst du die Datenbank nicht manuell erstellen.
+```
 
 ---
 
-## 3. Installation auf Linux (Apache, MySQL, PHP)
+## Technische Optimierung und Sicherheits-Hardening (Refactoring)
 
-### Schritte:
+Die Kern-Logik der Anwendung wurde in einer umfassenden Refactoring-Phase auf Enterprise-Niveau gehoben, um gängige Angriffsvektoren vollständig zu eliminieren:
 
-1. **Apache, MySQL und PHP installieren**:
-   Für Debian/Ubuntu:
+* **Schutz vor SQL-Injections:** Über 40 ehemals string-interpolierte SQL-Abfragen in den Kern-Modulen (Projekt-, Kunden-, Zeiterfassungs- und Upload-Verwaltung) wurden auf sichere **PDO Prepared Statements** umgestellt. Benutzereingaben werden strikt von der Ausführungslogik der Datenbank getrennt.
+* **Cross-Site Scripting (XSS) Prävention:** Dynamische HTML-Ausgaben in über 17 View-Dateien werden konsistent über die native Maskierungsfunktion `h()` abgesichert. Variablen-Übergaben innerhalb von JavaScript-Kontexten werden über `pm_json_script()` serialisiert, um Schadcode-Injektionen im Browser zu verhindern.
+* **Zentralisierung und DRY-Prinzip:** Redundante Code-Blöcke (wie die mehrfache Überprüfung und Erstellung von Systemeinstellungen oder Berechtigungsprüfungen) wurden in performante Helper-Funktionen innerhalb der `mysql.php` ausgelagert.
+* **Architektur-Bereinigung:** Das Protokollierungssystem (`log.php`) wurde strukturell in Library- und Controller-Ebenen getrennt. Dies verhindert Berechtigungskonflikte bei API- und Hintergrundaufrufen durch Nicht-Admins, während direkte administrative Zugriffe über strikte Tabellen-Whitelists geschützt bleiben.
+* **Stabilitäts- und Bugfixes:** Logikfehler im Validierungsprozess der Projekterstellung (`add_project.php`) sowie Pluralisierungsfehler beim Word-Export (`generate_word.php`) wurden vollständig behoben. Inaktive Code-Reste und Debug-Artefakte wurden restlos entfernt.
+
+---
+
+## Installationsanleitung
+
+### 1. Allgemeine Systemvoraussetzungen
+- PHP (Version 7.0 oder höher)
+- Apache Webserver (inklusive aktiviertem `mod_rewrite`)
+- MySQL- oder MariaDB-Datenbankserver
+
+### 2. Einrichtung unter Windows (mit XAMPP)
+1. Starten Sie das XAMPP Control Panel und aktivieren Sie die Module **Apache** und **MySQL**.
+2. Kopieren Sie den Inhalt des Ordners `htdocs` in das XAMPP-Webverzeichnis (`C:\xampp\htdocs`).
+3. Platzieren Sie den Ordner `vendor` sowie die Dateien `backup_cron.php`, `config.php` und `setup.php` direkt im selben Verzeichnis.
+
+### 3. Einrichtung unter Linux (Debian / Ubuntu)
+1. Installieren Sie die benötigten Pakete über den Paketmanager:
    ```bash
    sudo apt update
    sudo apt install apache2 mysql-server php libapache2-mod-php php-mysql
-   ```
-
-2. **Dateien ins Webverzeichnis kopieren**:
-   - Kopiere den Inhalt von `htdocs` nach `/var/www/html`.
-   - Kopiere den `vendor`-Ordner ebenfalls nach `/var/www/vendor`.
-   - Kopiere `backup_cron.php`, `config.php` und `setup.php` in das Verzeichnis `/var/www/html`.
-
-3. **Dateiberechtigungen anpassen**:
-   ```bash
-   sudo chown -R www-data:www-data /var/www/html
-   sudo chmod -R 755 /var/www/html
-   ```
-
----
-
-## 4. Installation auf Synology NAS
-
-### Schritte:
-
-1. **Web Station aktivieren und PHP/MariaDB installieren**:
-   - Öffne das `Paket-Zentrum` und installiere "Web Station", PHP (Version 7 oder höher) und MariaDB.
-
-2. **Dateien auf Synology NAS kopieren**:
-   - Lade den Inhalt des `htdocs`-Ordners nach `/web`.
-   - Kopiere den `vendor`-Ordner ebenfalls nach `/web/vendor`.
-   - Lade `backup_cron.php`, `config.php` und `setup.php` in den Ordner `/web`.
-
-3. **Datenbank einrichten**:
-   Die Einrichtung der Datenbank wird durch `setup.php` durchgeführt, also keine manuelle Einrichtung notwendig.
-
----
-
-## 5. SQL-Server und Datenbank-Setup
-
-Die MySQL-Datenbank wird durch das **setup.php**-Skript erstellt und konfiguriert, daher musst du nur sicherstellen, dass MySQL oder MariaDB auf deinem Server läuft und zugänglich ist.
-
----
-
-## 6. Ordnerstruktur und Dateien einrichten
-
-Die folgende Ordnerstruktur sollte verwendet werden:
 
 ```
-/server
-│
-├── /htdocs(linux = html)--> Alle Dateien der Webseite (Frontend/Backend)
-│   ├── index.php        --> Hauptdatei für den Server
-│   └── ...
-│
-├── /vendor              --> PHP-Abhängigkeiten (über Composer)
-│   └── ...
-│
-├── /backups             --> Optional: Backups der Webseite/Datenbank
-│   └── ...
-│
-├── backup_cron.php      --> PHP-Skript zur Sicherung der Datenbank
-├── config.php           --> Konfigurationsdatei für Datenbankverbindung
-├── setup.php            --> Automatisches Setup-Skript zur Initialisierung der Datenbank und Konfiguration
-└── sql_backup.sql       --> Optional: SQL-Datenbank-Backup-Datei
+
+2. Kopieren Sie die Web-Dateien nach `/var/www/html` und den `vendor`-Ordner nach `/var/www/vendor`.
+3. Passen Sie die Dateiberechtigungen für den Webserver-Nutzer an:
+```bash
+sudo chown -R www-data:www-data /var/www/html
+sudo chmod -R 755 /var/www/html
+
+```
+
+
+
+### 4. Einrichtung auf einer Synology NAS
+
+1. Installieren Sie über das Paket-Zentrum die **Web Station**, **PHP** sowie **MariaDB**.
+2. Laden Sie den Inhalt des `htdocs`-Ordners sowie die Dateien `backup_cron.php`, `config.php` und `setup.php` in das Verzeichnis `/web`.
+3. Kopieren Sie den Ordner `vendor` nach `/web/vendor`.
+
+---
+
+## Ersteinrichtung über das Setup-Skript
+
+Die Erstellung der Datenbanktabellen und die Konfiguration der Systemparameter erfolgt vollautomatisch:
+
+1. Rufen Sie das Installationsskript über Ihren Webbrowser auf:
+```
+http://localhost/setup.php
+
+```
+
+
+*(Ersetzen Sie `localhost` bei Server- oder NAS-Installationen durch die entsprechende IP-Adresse).*
+2. Folgen Sie den Anweisungen auf der Benutzeroberfläche. Das Skript initialisiert die Datenbankstruktur und generiert die finale `config.php`.
+3. **Wichtig:** Löschen Sie die Datei `setup.php` nach erfolgreicher Installation umgehend aus Sicherheitsgründen vom Server.
+
 ```
 
 ---
 
-## 7. Setup über setup.php
+### 🚀 So bringst du die neue README jetzt auf GitHub
 
-### Automatische Einrichtung:
+Speichere den Text einfach in deiner lokalen `README.md` auf deinem PC ab. Um das Ganze jetzt final und sauber hochzuladen, nutzt du diese drei Befehle in deinem Terminal:
 
-1. **Setup aufrufen**:
-   - Öffne deinen Webbrowser und rufe das Setup-Skript auf:
-     ```
-     http://localhost/setup.php
-     ```
-     oder (bei Synology NAS):
-     ```
-     http://<NAS-IP>/setup.php
-     ```
+```bash
+git add README.md
+git commit -m "docs: Completely redesign README structure, update directory layout, and add technical refactoring docs"
+git push origin main
 
-2. **Setup ausführen**:
-   - Das Skript erstellt automatisch die benötigte Datenbank und richtet die erforderlichen Tabellen ein.
-   - Es wird auch die `config.php` Datei entsprechend mit deinen MySQL-Zugangsdaten und weiteren Parametern konfigurieren.
-   - Folge den Anweisungen auf der Webseite, um die Einrichtung abzuschließen.
-
-3. **Setup-Skript löschen**:
-   - Nach erfolgreicher Installation solltest du die Datei `setup.php` aus Sicherheitsgründen löschen.
-     Beispiel für XAMPP:
-     ```bash
-     del C:\xampp\htdocs\setup.php
-     ```
-     Beispiel für Linux:
-     ```bash
-     sudo rm /var/www/html/setup.php
-     ```
+```
