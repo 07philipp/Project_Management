@@ -111,15 +111,3 @@ http://localhost/setup.php
 
 ```
 
----
-
-### 🚀 So bringst du die neue README jetzt auf GitHub
-
-Speichere den Text einfach in deiner lokalen `README.md` auf deinem PC ab. Um das Ganze jetzt final und sauber hochzuladen, nutzt du diese drei Befehle in deinem Terminal:
-
-```bash
-git add README.md
-git commit -m "docs: Completely redesign README structure, update directory layout, and add technical refactoring docs"
-git push origin main
-
-```
