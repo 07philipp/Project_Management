@@ -3,6 +3,6 @@ $host = "localhost";
 $user = "root";
 $password = "";
 $database = "PM_System";
-$high_admin_pw = "";
-$high_admin_name = "";
+$high_admin_pw = "user";
+$high_admin_name = "user";
 ?>
