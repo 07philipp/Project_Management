@@ -1,0 +1,378 @@
+/* Allgemeine Stile */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Hauptinhalt */
+h1 {
+    color: #333;
+}
+
+button:not(.linkButton) {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover:not(.linkButton) {
+    background-color: #219653;
+}
+
+.linkButton {
+    background: none;      /* Entfernt den Hintergrund */
+    border: none;          /* Entfernt den Rahmen */
+    color: blue;           /* Link-Farbe */
+    text-decoration: underline; /* Unterstrichen, wie ein Link */
+    cursor: pointer;       /* Zeigt den Zeiger-Cursor */
+    padding: 0;            /* Entfernt die Standard-Padding */
+    font: inherit;         /* Verwendet die Standard-Schriftart */
+}
+
+.linkButton:hover {
+    color: darkblue;       /* Ändert die Farbe beim Hover */
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th{
+    background-color: #f2f2f2;
+}
+
+/* Projektliste */
+.project-link {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.project-link:hover {
+    text-decoration: underline;
+}
+
+/* Zurück-zur-Homepage-Link */
+.back-to-home-link {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 0; /* Eckige Ecken */
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-decoration: none; /* Kein Unterstrich */
+    display: inline-block; /* Fügt eine Inline-Block-Anzeige hinzu */
+}
+
+.back-to-home-link:hover {
+    background-color: #219653;
+}
+
+.link {
+    font-size: 16px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 0; /* Eckige Ecken */
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-decoration: none; /* Kein Unterstrich */
+}
+
+.link:hover {
+    background-color: #219653;
+}
+
+.space {
+    margin-bottom: 10px;
+}
+
+.input {
+    padding: 20px;
+    border: none;
+    background-color: transparent;
+    width: 100%;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    margin-bottom: 10px;
+}
+
+.input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.input-empty {
+    padding: 5px;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    width: 80%;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    margin-bottom: 19px;
+    margin-top: 19px;
+}
+
+.input-empty:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+option.used {
+    background-color: #219653;
+    color: #ddd;
+}
+
+.select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 100px;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.custom-select {
+    width: 100%;
+    max-width: 200px;
+    padding: 8px;
+}
+
+.search-option {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.select-wrapper_S {
+    position: relative;
+    display: inline-block;
+    width: 80%;
+}
+
+.search-input_S {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.custom-select_S {
+    width: 100%;
+    padding: 8px;
+}
+
+.search-option_S {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.checkbox-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Definierte Höhe für den Container */
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+/* Fortschrittsbalken Wrapper */
+.progress-bar-wrapper {
+    text-align: center; /* Zentriert den gesamten Inhalt */
+    margin: 20px 0; /* Abstand oben und unten für den Wrapper */
+}
+
+/* Fortschrittsbalken Container */
+.progress-bar-container {
+    position: relative;
+    height: 20px; /* Höhe der Fortschrittsbar */
+    background-color: #e0e0e0; /* Hintergrund des Containers */
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100px; /* Breite auf 100% setzen */
+    margin: 0 auto; /* Zentriert die Fortschrittsbar innerhalb des Containers */
+}
+
+/* Fortschrittsbalken */
+.progress-bar-bar {
+    height: 100%;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 20px; /* Höhe der Bar für zentrierten Text */
+    white-space: nowrap; /* Verhindert Umbruch des Textes */
+}
+
+/* Stil für die Prozentangabe */
+.progress-bar-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 20px; /* Gleiche Höhe wie die Fortschrittsbar */
+    color: #000; /* Textfarbe schwarz für besseren Kontrast */
+    top: 0;
+    left: 0;
+    transform: translate(0, 0); /* Zentriert den Text innerhalb der Bar */
+    box-sizing: border-box;
+}
+
+/* Fortschrittsinfo */
+.progress-info {
+    margin-top: 10px; /* Abstand über dem Text */
+    font-size: 14px; /* Kleinere Schriftgröße für den Text */
+    color: #333; /* Dunklere Farbe für den Text */
+    text-align: center; /* Zentriert den Text unter der Fortschrittsbar */
+}
+
+.settings-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    display: block;
+}
+
+.settings-container form button {
+    margin-top: 10px; /* Abstand zum Hochladen- oder Herunterladen-Button */
+}
+
+.settings-container label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.settings-container input[type="file"],
+.settings-container input[type="text"],
+.settings-container textarea,
+.settings-container select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* Allgemeine Stile für Links im Admin-Panel */
+.admin-links {
+    margin-bottom: 20px;
+}
+
+/* Container für das Admin-Panel */
+.admin-container {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    display: block;
+}
+
+.log-container {
+    margin-bottom: 20px;
+    display: flex;
+}
+
+.log-container form button {
+    margin-right: 10px; /* Abstand zum Hochladen- oder Herunterladen-Button */
+}
+
+.users-container {
+    margin-top: 20px;
+    padding: 20px;
+    display: block;
+}
+
+.upload-container input[type="file"],
+.upload-container input[type="text"],
+.upload-container textarea,
+.upload-container select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.comb-container {
+    background-color: #fff;
+    display: block;
+}
+
+
+/* Basis Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #000;
+    white-space: nowrap;
+}
+
+/* Größer (Projekt-Detailseite) */
+.status-badge.large {
+    font-size: 14px;
+    padding: 6px 14px;
+}
+
+/* Farben */
+.status-in_progress {
+    background: #dbeafe; /* blau */
+}
+
+.status-completed {
+    background: #fde68a; /* gelb */
+}
+
+.status-invoice_sent {
+    background: #fed7aa; /* orange */
+}
+
+.status-paid {
+    background: #bbf7d0; /* grün */
+}
+
+.status-archived {
+    background: #e5e7eb; /* grau */
+    color: #555;
+}
+li .status-badge {
+    margin-left: 8px;
+}

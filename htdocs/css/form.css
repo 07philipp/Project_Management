@@ -1,0 +1,25 @@
+/* Projektformular */
+#projectForm, #clientForm {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+#projectForm label:not(.gender label), #clientForm label:not(.gender label) {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#projectForm input:not(.select-wrapper input, .gender input), #clientForm input:not(.gender input) {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.projectForm .clientForm form {
+    margin-bottom: 20px;
+}

@@ -1,0 +1,64 @@
+/* Container für die gesamte Suchleiste */
+.projectSearch {
+    display: flex; /* Aktiviert Flexbox für das Layout */
+    align-items: center; /* Zentriert die Elemente vertikal */
+    gap: 10px; /* Abstand zwischen den Elementen */
+    padding: 10px; /* Innenabstand */
+    box-sizing: border-box; /* Padding und Border in der Breite einbeziehen */
+    max-width: 1850px; /* Maximale Breite für den Container */
+    margin-left: 10px; /* Abstand vom linken Rand */
+    margin-bottom: 10px; /* Abstand vom oberen Rand */
+    background-color: #f9f9f9; /* Hintergrundfarbe für einen sanften Look */
+    border: 1px solid #ddd; /* Rahmen um den Container */
+    border-radius: 5px; /* Abgerundete Ecken */
+    flex-wrap: nowrap; /* Verhindert Umbruch in die nächste Zeile */
+}
+
+/* Stil für die Eingabefelder */
+.filter_search-input {
+    flex: 1 1 200px; /* Erlaubt dem Eingabefeld, sich bis zu 200px zu erweitern */
+    max-width: 300px; /* Maximale Breite für das Eingabefeld */
+    padding: 8px; /* Innenabstand für das Eingabefeld */
+    border: 1px solid #ccc; /* Rahmenfarbe */
+    border-radius: 4px; /* Abgerundete Ecken */
+    box-sizing: border-box; /* Padding und Border in der Breite einbeziehen */
+}
+
+.filter_search_filter{
+    flex: 1 1 200px; /* Erlaubt dem Eingabefeld, sich bis zu 200px zu erweitern */
+    max-width: 600px; /* Maximale Breite für das Eingabefeld */
+    padding: 8px; /* Innenabstand für das Eingabefeld */
+}
+
+/* Stil für die Dropdown-Menüs */
+.filter_custom-select {
+    flex: 1 1 150px; /* Erlaubt dem Dropdown, sich bis zu 150px zu erweitern */
+    max-width: 200px; /* Maximale Breite für das Dropdown */
+    padding: 8px; /* Innenabstand für das Dropdown */
+    border: 1px solid #ccc; /* Rahmenfarbe */
+    border-radius: 4px; /* Abgerundete Ecken */
+    box-sizing: border-box; /* Padding und Border in der Breite einbeziehen */
+}
+
+/* Stil für die Optionen innerhalb der Dropdown-Menüs */
+.filter_search-option {
+    padding: 10px;
+    font-size: 16px;
+}
+
+/* Stil für den Clear-Button */
+#clearProject {
+    background-color: #27ae60; /* Hintergrundfarbe des Buttons */
+    color: white; /* Textfarbe des Buttons */
+    border: none; /* Kein Rahmen */
+    padding: 10px 20px; /* Innenabstand für den Button */
+    cursor: pointer; /* Zeigt, dass der Button klickbar ist */
+    font-size: 16px; /* Schriftgröße */
+    border-radius: 4px; /* Abgerundete Ecken */
+    transition: background-color 0.3s ease; /* Übergang für Hintergrundfarbe */
+    white-space: nowrap; /* Verhindert Umbruch des Button-Textes */
+}
+
+#clearProject:hover {
+    background-color: #219653; /* Hintergrundfarbe des Buttons bei Hover */
+}

@@ -1,0 +1,79 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Container für Formulare */
+#form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#form-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+#form-container label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+#form-container input[type="text"],
+#form-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+}
+
+button,
+input[type="submit"],
+.back-to-home-link {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    display: inline-block; /* Ensure buttons are not stretched */
+    text-align: center; /* Center text in buttons */
+    text-decoration: none; /* Remove underline for links */
+    margin-top: 10px; /* Ensure proper spacing */
+}
+
+button:hover,
+input[type="submit"]:hover,
+.back-to-home-link:hover {
+    background-color: #219653;
+}
+
+#error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+}

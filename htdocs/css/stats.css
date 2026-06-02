@@ -1,0 +1,66 @@
+body{
+    font-family: system-ui, sans-serif;
+    background:#f4f6f8;
+}
+
+h1{margin-bottom:10px}
+
+/* KPIs */
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:20px;
+}
+.kpi{
+    background:#fff;
+    padding:14px;
+    border-radius:10px;
+    font-size:15px;
+}
+
+/* Charts */
+.charts{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+}
+
+.box{
+    background:#fff;
+    padding:14px;
+    border-radius:12px;
+}
+
+/* Allgemein */
+canvas{
+    width:100%!important;
+}
+
+/* Line / Bar Charts */
+.box canvas{
+    width:100%!important;
+    height:360px!important;
+}
+
+.box.pie canvas{
+    max-width:320px!important;
+    max-height:320px!important;
+    width:100%!important;
+    height:auto!important;
+}
+
+.chart-title{
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:10px;
+    color:#222;
+    text-align:center;
+    letter-spacing:0.3px;
+}
+
+.chart-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
