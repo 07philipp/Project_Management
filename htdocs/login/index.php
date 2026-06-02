@@ -25,8 +25,6 @@ if (isset($_COOKIE['username'])) {
     $_SESSION['permission_level'] = $user['permission_level'];
 
     // Save session to database
-    define('INCLUDE_GUARD', true);
-    require_once '../mysql.php';
     $session_id = session_id();
     $stmt = $mysql->prepare("INSERT INTO user_sessions (session_id, user_id) VALUES (:session_id, :user_id) ON DUPLICATE KEY UPDATE last_activity = NOW()");
     $stmt->bindParam(':session_id', $session_id);
@@ -115,7 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['b'])) {
         } else {
           // Weiterleitung zur Startseite, wenn keine GET-Variable oder Methode unzulässig ist
           header("Location: ../");
-          echo "3";
           exit;
         }
       } else {
@@ -130,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['b'])) {
     <div id="form-container">
       <h1>Login</h1>
       <form method="post">
-        <input type="hidden" name="back" value="<?php echo isset($back) ? htmlspecialchars($back) : ''; ?>">
+        <input type="hidden" name="back" value="<?php echo isset($back) ? h($back) : ''; ?>">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" placeholder="Username" required><br>
         <label for="password">Password:</label>

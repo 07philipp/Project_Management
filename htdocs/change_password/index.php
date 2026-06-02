@@ -38,12 +38,9 @@ if (!$userData) {
     <script src="../js/notification.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
     </script>
@@ -52,7 +49,7 @@ if (!$userData) {
 <body>
     <div class="container">
         <div id="form-container">
-            <h1><?php echo htmlspecialchars($userData['user_name']); ?></h1>
+            <h1><?php echo h($userData['user_name']); ?></h1>
             <form action="../change_pw.php" method="post">
                 <label for="password">Aktuelles Passwort:</label>
                 <input type="password" name="password"><br>

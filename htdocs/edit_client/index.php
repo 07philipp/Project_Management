@@ -19,20 +19,21 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     $clientNumber = $_GET['id'];
     include('../mysql.php');
 
-    $clientQuery = "SELECT *
-        FROM client
-        WHERE client_id = '$clientNumber'";
-    $clientResult = $mysql->query($clientQuery);
-    if ($clientResult) {
-        $clientData = $clientResult->fetch(PDO::FETCH_ASSOC);
+    $stmt = $mysql->prepare('SELECT * FROM client WHERE client_id = :client_id');
+    $stmt->execute([':client_id' => $clientNumber]);
+    if ($stmt) {
+        $clientData = $stmt->fetch(PDO::FETCH_ASSOC);
         $clientName = $clientData['client_name'];
         $clientAdress = $clientData['client_address'];
         $clientLocation = $clientData['client_location'];
         $clientCompany = $clientData['client_company'];
         $clientGender = $clientData['client_gender'];
 
-        $projectQuery = "SELECT * FROM project WHERE project_client_id = $clientNumber";
-        $projectResult = $mysql->query($projectQuery);
+        $projectStmt = $mysql->prepare(
+            'SELECT * FROM project WHERE project_client_id = :client_id'
+        );
+        $projectStmt->execute([':client_id' => $clientNumber]);
+        $projectResult = $projectStmt;
 
         $projects = array();
 
@@ -59,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     <script>
         function saveChanges(inputField) {
             var params = new URLSearchParams();
-            params.append("client_id", <?php echo "$clientNumber"; ?>);
+            params.append("client_id", <?= pm_json_script($clientNumber) ?>);
             params.append(inputField.name, inputField.value);
 
             var xhr = new XMLHttpRequest();
@@ -87,17 +88,17 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
         <tr>
             <td><?php if (isset($projects[$clientNumber])) {
                     foreach ($projects[$clientNumber] as $project) { ?>
-                        <a href="../projects/<?php echo $project['project_id'];; ?>"><?php echo $project['project_name']; ?></a>
+                        <a href="../projects/<?php echo h($project['project_id']); ?>"><?php echo h($project['project_name']); ?></a>
             </td>
     <?php }
                 } ?>
-    <td><input class='input' name="name" type="text" value='<?php echo "$clientName"; ?>' onchange="saveChanges(this)"></td>
+    <td><input class='input' name="name" type="text" value='<?php echo h($clientName); ?>' onchange="saveChanges(this)"></td>
 
-    <td><input class='input' name="adress" type="text" value='<?php echo "$clientAdress"; ?>' onchange="saveChanges(this)"></td>
+    <td><input class='input' name="adress" type="text" value='<?php echo h($clientAdress); ?>' onchange="saveChanges(this)"></td>
 
-    <td><input class='input' name="location" type="text" value='<?php echo "$clientLocation"; ?>' onchange="saveChanges(this)"></td>
+    <td><input class='input' name="location" type="text" value='<?php echo h($clientLocation); ?>' onchange="saveChanges(this)"></td>
 
-    <td><input class='input' name="company" type="text" value='<?php echo "$clientCompany"; ?>' onchange="saveChanges(this)"></td>
+    <td><input class='input' name="company" type="text" value='<?php echo h($clientCompany); ?>' onchange="saveChanges(this)"></td>
 
     <td>
 
@@ -125,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     <?php if (isset($_GET['back'])) { ?>
         <a class="link" href='../clients'>Fertig</a>
     <?php } else { ?>
-        <a class="link" href='../clients/?id=<?php echo "$clientNumber"; ?>'>Fertig</a>
+        <a class="link" href='../clients/?id=<?php echo h($clientNumber); ?>'>Fertig</a>
     <?php } ?>
     </div>
 

@@ -16,11 +16,11 @@ if ($_SESSION["permission_level"] <= 3) {
 include 'mysql.php';
 require_once "log.php";
 
-require_once '../vendor/autoload.php'; // PhpWord laden
+require_once '../vendor/autoload.php';
 
-$uploadDir = 'docx/'; // Verzeichnis für die Uploads
+$uploadDir = 'docx/';
 
-// Action aus POST-Daten übernehmen
+// POST action handler
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 
 if ($action == 'upload') {
@@ -119,7 +119,6 @@ if ($action == 'upload') {
 
 
 
-// Funktionen für Dateiverwaltung
 function uploadFile($uploadDir, $mysql)
 {
     // Überprüfen, ob eine Datei hochgeladen wurde
@@ -147,7 +146,6 @@ function uploadFile($uploadDir, $mysql)
             case 'invoice_discount':
                 $filename = 'invoice_discount.docx';
                 break;
-            // Weitere Template-Typen hinzufügen
             default:
                 $_SESSION['error_message'] = "Ungültiger Template-Typ.";
                 header("Location: settings/");
@@ -184,74 +182,7 @@ function downloadFile($filename, $uploadDir)
     }
 }
 
-function eMail($newSubject, $newBody, $mysql)
-{
-    // Updates durchführen
-    $updateSubjectQuery = "UPDATE settings SET setting = :setting WHERE setting_type = 'email_subject'";
-    $stmt = $mysql->prepare($updateSubjectQuery);
-    $stmt->bindParam(':setting', $newSubject);
-    $stmt->execute();
-
-    $updateBodyQuery = "UPDATE settings SET setting = :setting WHERE setting_type = 'email_body'";
-    $stmt = $mysql->prepare($updateBodyQuery);
-    $stmt->bindParam(':setting', $newBody);
-    $stmt->execute();
-
-    $_SESSION['error_message'] = "Einstellungen wurden aktualisiert.";
+if ($action === 'upload') {
+    header("Location: settings/");
+    exit;
 }
-
-function allowedUploadFile($uploadDir, $mysql)
-{
-    // Abrufen der zulässigen Dateiendungen
-    $extensionsStmt = $mysql->query("SELECT setting FROM settings WHERE setting_type = 'allowed_extensions'");
-    $allowedExtensions = explode(',', $extensionsStmt->fetchColumn());
-
-    // Überprüfen, ob eine Datei hochgeladen wurde
-    if (isset($_FILES['file'])) {
-        $fileType = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
-
-        // Überprüfen, ob die Dateiendung erlaubt ist
-        if (!in_array($fileType, $allowedExtensions)) {
-            $_SESSION['error_message'] = "Es dürfen nur folgende Dateitypen hochgeladen werden: " . implode(', ', $allowedExtensions);
-            header("Location: settings/");
-            exit;
-        }
-
-        // Verzeichnis erstellen, falls es noch nicht existiert
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        // Template-Typ ermitteln
-        $templateType = isset($_POST['template_type']) ? $_POST['template_type'] : '';
-        $filename = '';
-
-        switch ($templateType) {
-            case 'invoice':
-                $filename = 'invoice.' . $fileType;
-                break;
-            case 'invoice_discount':
-                $filename = 'invoice_discount.' . $fileType;
-                break;
-            default:
-                $_SESSION['error_message'] = "Ungültiger Template-Typ.";
-                header("Location: settings/");
-                exit;
-        }
-
-        // Datei verschieben
-        $uploadFile = $uploadDir . $filename;
-        if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile)) {
-            $_SESSION['error_message'] = "Die Datei wurde erfolgreich hochgeladen.";
-            logSQL($mysql, $_SESSION['username'], "settings bill up $uploadFile");
-        } else {
-            $_SESSION['error_message'] = "Es gab ein Problem beim Hochladen der Datei.";
-        }
-    } else {
-        $_SESSION['error_message'] = "Keine Datei hochgeladen.";
-    }
-}
-
-
-header("Location: settings/");
-exit;

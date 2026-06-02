@@ -14,12 +14,12 @@ if ($_SESSION["permission_level"] == 2) {
 
         include("mysql.php");
 
-        $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$project_id'";
-        $projectResult = $mysql->query($projectQuery);
-        if ($projectResult) {
-            $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+        $projectStmt = $mysql->prepare(
+            'SELECT project_user_id FROM project WHERE project_id = :project_id'
+        );
+        $projectStmt->execute([':project_id' => $project_id]);
+        if ($projectStmt) {
+            $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
             $projectUserId = $projectData['project_user_id'];
             if ($projectUserId != $_SESSION['user_id']) {
                 echo "Keine berechtigung.";

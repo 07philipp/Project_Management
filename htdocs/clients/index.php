@@ -22,7 +22,7 @@ function renderProjectStatusBadge(string $status, bool $large = false): string
     $text = $labels[$status] ?? $status;
     $size = $large ? ' large' : '';
 
-    return "<span class='status-badge status-$status$size'>$text</span>";
+    return "<span class='status-badge status-" . h($status) . h($size) . "'>" . h($text) . "</span>";
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
@@ -60,41 +60,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?php echo htmlspecialchars($clientName); ?></title>
+        <title><?php echo h($clientName); ?></title>
         <link rel="stylesheet" href="../css/style.css">
         <link rel="stylesheet" href="../css/form.css">
         <link rel="stylesheet" href="../css/notification.css">
         <script src="../js/notification.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Fetch error message from PHP session
-                var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+                var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
                 if (errorMessage) {
                     showNotification(errorMessage);
-                    // Clear the session error message
-                    <?php unset($_SESSION['error_message']); ?>
                 }
             });
         </script>
     </head>
 
     <body>
-        <h1><?php echo htmlspecialchars($clientName); ?></h1>
-        <p>Adresse: <?php echo htmlspecialchars($clientAddress); ?></p>
+        <h1><?php echo h($clientName); ?></h1>
+        <p>Adresse: <?php echo h($clientAddress); ?></p>
         <td></td>
 
-        <p>E-Mail: <a id='sendEmailButton' class='email-button' href='#'><?php echo htmlspecialchars($clientEMail); ?></a></p>
-        <p>Ort: <?php echo htmlspecialchars($clientLocation); ?></p>
-        <p>Unternehmen: <?php echo htmlspecialchars($clientCompany); ?></p>
-        <p>Geschäftsnummer: <?php if($clientPhone != ""){echo "<a href='tel:".$clientPhone."'>".$clientPhone ."</a>";}else{echo "N/A";}?></p>
-        <p>Mobilnummer: <?php if($clientMobile != ""){echo "<a href='tel:".$clientMobile."'>".$clientMobile ."</a>";}else{echo "N/A";}?></p>
-        <p>Geschlecht: <?php echo htmlspecialchars($clientGender); ?></p>
+        <p>E-Mail: <a id='sendEmailButton' class='email-button' href='#'><?php echo h($clientEMail); ?></a></p>
+        <p>Ort: <?php echo h($clientLocation); ?></p>
+        <p>Unternehmen: <?php echo h($clientCompany); ?></p>
+        <p>Geschäftsnummer: <?php if ($clientPhone != "") { echo "<a href='tel:" . h($clientPhone) . "'>" . h($clientPhone) . "</a>"; } else { echo "N/A"; } ?></p>
+        <p>Mobilnummer: <?php if ($clientMobile != "") { echo "<a href='tel:" . h($clientMobile) . "'>" . h($clientMobile) . "</a>"; } else { echo "N/A"; } ?></p>
+        <p>Geschlecht: <?php echo h($clientGender); ?></p>
         <script>
-            // Email Button Click Handler
             document.getElementById('sendEmailButton').addEventListener('click', function() {
-                const emailAddress = '<?php echo $clientEMail; ?>';
-                const subject = '<?php echo htmlspecialchars($emailSubject); ?>';
-                const body = '<?php echo htmlspecialchars($emailBody); ?>';
+                const emailAddress = <?= pm_json_script($clientEMail) ?>;
+                const subject = <?= pm_json_script($emailSubject) ?>;
+                const body = <?= pm_json_script($emailBody) ?>;
 
                 // Öffnet das E-Mail-Programm mit den vorausgefüllten Details
                 const mailtoLink = `mailto:${encodeURIComponent(emailAddress)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -113,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             } else {
                 while ($project = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     if($project['project_status'] != "archived"){
-                        echo "<li><a href='../projects/?id=" . htmlspecialchars($project['project_id']) . "'>"
-                        . htmlspecialchars($project['project_name']) . "</a>"
+                        echo "<li><a href='../projects/?id=" . h($project['project_id']) . "'>"
+                        . h($project['project_name']) . "</a>"
                         . renderProjectStatusBadge($project['project_status']) . "</li>";
                     }
                 }
@@ -124,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         <?php if (3 <= $_SESSION['permission_level']) { ?>
             <h2>Neues Projekt erstellen:</h2>
             <form class="projectForm" id="projectForm" action='../add_project.php' method='post'>
-                <input type='hidden' name='client_id' value='<?php echo $clientId; ?>'>
+                <input type='hidden' name='client_id' value='<?php echo h($clientId); ?>'>
                 <label for='project_name'>Projektname:</label>
                 <input type='text' name='project_name' required>
                 <br>
@@ -145,11 +141,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             <br>
             <div class="space">
                 <form class="edit_client" action="../edit_client" method="get" style="display:inline;">
-                    <input type="hidden" name="id" value="<?php echo $clientId ?>">
+                    <input type="hidden" name="id" value="<?php echo h($clientId); ?>">
                     <button class="link" type="submit">Kunden bearbeiten</button>
                 </form>
                 <form class="delete_client" action="../delete_client.php" method="post" style="display:inline;">
-                    <input type="hidden" name="client_id" value="<?php echo $clientId; ?>">
+                    <input type="hidden" name="client_id" value="<?php echo h($clientId); ?>">
                     <button class="link" type="submit">Kunden löschen</button>
                 </form>
             </div>
@@ -218,19 +214,16 @@ $emailBody = $mysql->query($emailBodyQuery)->fetchColumn();
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
 
         function sendMail(value) {
             const emailAddress = value;
-            const subject = '<?php echo htmlspecialchars($emailSubject); ?>';
-            const body = '<?php echo htmlspecialchars($emailBody); ?>';
+            const subject = <?= pm_json_script($emailSubject) ?>;
+            const body = <?= pm_json_script($emailBody) ?>;
 
             const mailtoLink = `mailto:${encodeURIComponent(emailAddress)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
@@ -257,7 +250,7 @@ $emailBody = $mysql->query($emailBodyQuery)->fetchColumn();
                         $clients = $result->fetchAll(PDO::FETCH_ASSOC);
 
                         foreach ($clients as $client) {
-                            echo "<option value='" . $client['client_name'] . "' class='filter_search-option'>" . $client['client_name'] . "</option>";
+                            echo "<option value='" . h($client['client_name']) . "' class='filter_search-option'>" . h($client['client_name']) . "</option>";
                         }
                     }
                 } catch (PDOException $e) {
@@ -283,23 +276,23 @@ $emailBody = $mysql->query($emailBodyQuery)->fetchColumn();
         </tr>
         <?php foreach ($clients as $client) { ?>
             <tr class="project-row">
-                <td><a href="../clients/?id=<?php echo $client['client_id']; ?>"><?php echo htmlspecialchars($client['client_name']); ?></a></td>
-                <td><?php echo htmlspecialchars($client['client_address']); ?></td>
-                <td><button id="linkButton" class="linkButton" onclick="sendMail(' <?php echo htmlspecialchars($client['client_e_mail']); ?> ')"><?php echo htmlspecialchars($client['client_e_mail']); ?></a></td>
-                <td><?php echo htmlspecialchars($client['client_location']); ?></td>
-                <td><?php echo htmlspecialchars($client['client_company']); ?></td>
+                <td><a href="../clients/?id=<?php echo h($client['client_id']); ?>"><?php echo h($client['client_name']); ?></a></td>
+                <td><?php echo h($client['client_address']); ?></td>
+                <td><button type="button" class="linkButton" onclick="sendMail(<?= pm_json_script($client['client_e_mail']) ?>)"><?php echo h($client['client_e_mail']); ?></button></td>
+                <td><?php echo h($client['client_location']); ?></td>
+                <td><?php echo h($client['client_company']); ?></td>
 
                 <td>
-                    <p>Geschäftsnummer: <?php if($client['client_phone'] != ""){echo "<a href='tel:".$client['client_phone']."'>".$client['client_phone'] ."</a>";}else{echo "N/A";}?></p>
-                    <p>Mobilnummer: <?php if($client['client_mobile'] != ""){echo "<a href='tel:".$client['client_mobile']."'>".$client['client_mobile'] ."</a>";}else{echo "N/A";}?></p>
+                    <p>Geschäftsnummer: <?php if ($client['client_phone'] != "") { echo "<a href='tel:" . h($client['client_phone']) . "'>" . h($client['client_phone']) . "</a>"; } else { echo "N/A"; } ?></p>
+                    <p>Mobilnummer: <?php if ($client['client_mobile'] != "") { echo "<a href='tel:" . h($client['client_mobile']) . "'>" . h($client['client_mobile']) . "</a>"; } else { echo "N/A"; } ?></p>
                 </td>
 
-                <td><?php echo htmlspecialchars($client['client_gender']); ?></td>
+                <td><?php echo h($client['client_gender']); ?></td>
                 <td>
                     <ul>
                         <?php if (isset($projects[$client['client_id']])) {
                             foreach ($projects[$client['client_id']] as $project) { ?>
-                                <li><a href="../projects/?id=<?php echo $project['project_id']; ?>"><?php echo htmlspecialchars($project['project_name']); ?></a></li>
+                                <li><a href="../projects/?id=<?php echo h($project['project_id']); ?>"><?php echo h($project['project_name']); ?></a></li>
                         <?php }
                         } else {
                             echo "Keine Projekte gefunden";
@@ -310,11 +303,11 @@ $emailBody = $mysql->query($emailBodyQuery)->fetchColumn();
                     <td>
                         <form class="delete_client" action="../delete_client.php" method="post" style="display:inline;"                         
                         onsubmit="return confirm('Bist du sicher, dass du diesen Kunden wirklich löschen willst?\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!');">
-                            <input type="hidden" name="client_id" value="<?php echo $client['client_id']; ?>">
+                            <input type="hidden" name="client_id" value="<?php echo h($client['client_id']); ?>">
                             <button class="space link" type="submit">Kunden löschen</button>
                         </form>
                         <form class="edit_client" action="../edit_client/" method="get" style="display:inline;">
-                            <input type="hidden" name="id" value="<?php echo $client['client_id']; ?>">
+                            <input type="hidden" name="id" value="<?php echo h($client['client_id']); ?>">
                             <input type="hidden" name="back" value="back">
                             <button class="link" type="submit">Kunden bearbeiten</button>
                         </form>

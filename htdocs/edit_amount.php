@@ -11,20 +11,20 @@ if ($_SESSION["permission_level"] == 2) {
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $order_id = $_POST['order_id'];
         include("mysql.php");
-        $orderQuery = "SELECT order_project_id, order_checked
-        FROM `order`
-        WHERE order_id = '$order_id'";
-        $orderResult = $mysql->query($orderQuery);
-        if ($orderResult) {
-            $orderData = $orderResult->fetch(PDO::FETCH_ASSOC);
+        $orderStmt = $mysql->prepare(
+            'SELECT order_project_id, order_checked FROM `order` WHERE order_id = :order_id'
+        );
+        $orderStmt->execute([':order_id' => $order_id]);
+        if ($orderStmt) {
+            $orderData = $orderStmt->fetch(PDO::FETCH_ASSOC);
             $projectNumber = $orderData['order_project_id'];
             $orderChecked = $orderData['order_checked'];
-            $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$projectNumber'";
-            $projectResult = $mysql->query($projectQuery);
-            if ($projectResult) {
-                $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+            $projectStmt = $mysql->prepare(
+                'SELECT project_user_id FROM project WHERE project_id = :project_id'
+            );
+            $projectStmt->execute([':project_id' => $projectNumber]);
+            if ($projectStmt) {
+                $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
                 $projectUserId = $projectData['project_user_id'];
                 if ($projectUserId != $_SESSION['user_id']) {
                     echo "Keine berechtigung.";
@@ -42,12 +42,12 @@ if ($_SESSION["permission_level"] == 2) {
 } else {
     $order_id = $_POST['order_id'];
     include("mysql.php");
-    $orderQuery = "SELECT order_project_id, order_checked
-        FROM `order`
-        WHERE order_id = '$order_id'";
-    $orderResult = $mysql->query($orderQuery);
-    if ($orderResult) {
-        $orderData = $orderResult->fetch(PDO::FETCH_ASSOC);
+    $orderStmt = $mysql->prepare(
+        'SELECT order_project_id, order_checked FROM `order` WHERE order_id = :order_id'
+    );
+    $orderStmt->execute([':order_id' => $order_id]);
+    if ($orderStmt) {
+        $orderData = $orderStmt->fetch(PDO::FETCH_ASSOC);
         $orderChecked = $orderData['order_checked'];
         $projectId = $orderData['order_project_id'];
     }
@@ -131,11 +131,11 @@ if ($order_checked !== null) {
 
         $stmt = $mysql->prepare("
             UPDATE project 
-            SET project_status = '$newStatus',
+            SET project_status = :status,
                 completed_date = NOW()
             WHERE project_id = :pid
         ");
-        $stmt->execute([':pid' => $projectId]);
+        $stmt->execute([':status' => $newStatus, ':pid' => $projectId]);
 
         if($newStatus === 'in_progress'){
             $stmt = $mysql->prepare("

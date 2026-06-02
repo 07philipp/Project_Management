@@ -20,8 +20,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['project_id']) && isse
     include('mysql.php');
     require_once "log.php";
 
-    $updateQuery = "UPDATE project SET project_client_id = '$clientId' WHERE project_id = '$projectId'";
-    $result = $mysql->query($updateQuery);
+    $stmt = $mysql->prepare(
+        'UPDATE project SET project_client_id = :client_id WHERE project_id = :project_id'
+    );
+    $result = $stmt->execute([
+        ':client_id' => $clientId,
+        ':project_id' => $projectId,
+    ]);
 
     if ($result) {
         echo "Kunde wurde geändert.";

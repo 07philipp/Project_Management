@@ -25,10 +25,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $dueDate = isset($_POST["due_date"]) ? $_POST["due_date"] : '';
     $user = isset($_POST["user_id"]) ? $_POST["user_id"] : '';
     $projectAmount = "0";
+    $errors = [];
 
     $sql = "SELECT COUNT(*) FROM `project` WHERE project_id = :id";
     $stmt = $mysql->prepare($sql);
-    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+    $stmt->bindParam(':id', $projectId);
     $stmt->execute();
 
     $exists = $stmt->fetchColumn();
@@ -41,8 +42,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $errors[] = "Bitte geben Sie die Project ID an.";
     }
     if (!empty($errors)) {
-        echo "<script>window.history.back();</script>";
         $_SESSION['error_message'] = $errors;
+        echo "<script>window.history.back();</script>";
+        exit;
     }
 
     if ($_POST["client_id"] == "neu") {
@@ -57,16 +59,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $clientMobile = isset($_POST["new_client_mobile"]) ? trim($_POST["new_client_mobile"]) : '';
 
         // Fehlerprüfungen
-        $errors = [];
         if (empty($clientName)) {
             $errors[] = "Bitte geben Sie den Namen des Kunden an.";
         }
 
-
-        // Fehler ausgeben
         if (!empty($errors)) {
-            echo "<script>window.history.back();</script>";
             $_SESSION['error_message'] = $errors;
+            echo "<script>window.history.back();</script>";
+            exit;
         }
 
         try {
@@ -84,8 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->bindParam(':mobile', $clientMobile);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo "<script>window.history.back();</script>";
             $_SESSION['error_message'] = "Fehler beim Erstellen des neuen Kunden: " . $e->getMessage();
+            echo "<script>window.history.back();</script>";
             exit;
         }
         logSQL($mysql, $_SESSION['username'], "createt user $clientId ($clientName)");
@@ -148,10 +148,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $count = $mysql->query($countQ)->fetchColumn();
         $count++;
 
-        $insertQuery = "UPDATE `settings` setting_type 
-        SET setting = :setting 
-        WHERE setting_type = 'project_id_count'";
-        $stmt = $mysql->prepare($insertQuery);
+        $updateQuery = "UPDATE settings SET setting = :setting WHERE setting_type = 'project_id_count'";
+        $stmt = $mysql->prepare($updateQuery);
         $stmt->bindParam(':setting', $count);
         $stmt->execute();
     }

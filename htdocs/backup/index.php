@@ -38,12 +38,9 @@ $backups = glob($backupDir . "*.zip");
     <title>Backup-Management</title>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
     </script>

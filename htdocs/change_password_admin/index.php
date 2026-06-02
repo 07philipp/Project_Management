@@ -54,11 +54,10 @@ if (!$user) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+    var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
 
     if (errorMessage) {
         showNotification(errorMessage);
-        <?php unset($_SESSION['error_message']); ?>
     }
 
 });
@@ -72,11 +71,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div id="form-container">
 
-<h1><?php echo htmlspecialchars($user["user_name"]); ?></h1>
+<h1><?php echo h($user["user_name"]); ?></h1>
 
 <form action="../change_pw_admin.php" method="post">
 
-<input type="hidden" name="user_id" value="<?php echo $user["user_id"]; ?>">
+<input type="hidden" name="user_id" value="<?php echo h($user["user_id"]); ?>">
 
 <label>Neues Passwort:</label>
 <input type="password" name="password_new" required>

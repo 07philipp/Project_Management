@@ -15,11 +15,9 @@ $user = $stmt->fetch();
 $selectedStatuses = [];
 
 if (!empty($user['project_filter'])) {
-    $selectedStatuses = json_decode($user['project_filter'], true);
+    $selectedStatuses = json_decode($user['project_filter'], true) ?? [];
 }
 
-
-// Query to retrieve projects from the database
 $params = [];
 
 $projectsQuery = "
@@ -43,7 +41,6 @@ $stmt = $mysql->prepare($projectsQuery);
 $stmt->execute($params);
 $projectsResult = $stmt;
 
-// Query to retrieve orders and amounts for each project
 $ordersQuery = "SELECT o.order_id, o.order_project_id, o.order_order, o.order_amount, o.order_checked
                 FROM `order` o 
                 JOIN project p ON p.project_id = o.order_project_id";
@@ -84,17 +81,11 @@ if ($projectsResult && $ordersResult) {
     <script src="js/update.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
-
-        
-
     </script>
 </head>
 
@@ -123,7 +114,7 @@ if ($projectsResult && $ordersResult) {
     <?php
     if (3 <= $_SESSION["permission_level"]) {
         echo "<button onclick='toggleProjectForm()'>Projekt hinzufügen</button>
-        <button onclick='toggleClientForm()''>Kunden hinzufügen</button>";
+        <button onclick='toggleClientForm()'>Kunden hinzufügen</button>";
     }
     ?>
     <button onclick="window.location.href='clients/';">Kunden</button>
@@ -194,7 +185,7 @@ if ($projectsResult && $ordersResult) {
                         $clients = $result->fetchAll(PDO::FETCH_ASSOC);
 
                         foreach ($clients as $client) {
-                            echo "<option id='client_id' name='client_id' value='" . $client['client_id'] . "' class='search-option'>" . $client['client_name'] . "</option>";
+                            echo "<option id='client_id' name='client_id' value='" . h($client['client_id']) . "' class='search-option'>" . h($client['client_name']) . "</option>";
                         }
                     }
                 } catch (PDOException $e) {
@@ -257,7 +248,7 @@ if ($projectsResult && $ordersResult) {
         $output = str_replace('!count', $count, $output);
         ?>
         <label for="project_id">Project ID:</label>
-        <input id="project_id" name="project_id" value="<?php echo $output; ?>" required>
+        <input id="project_id" name="project_id" value="<?php echo h($output); ?>" required>
         <br>
         <label for="project_order">Auftrag:</label>
         <input id="project_order" name="project_order">
@@ -287,7 +278,7 @@ if ($projectsResult && $ordersResult) {
 
                         foreach ($users as $user) {
                             if ($user['user_name'] != $user_name && $user['permission_level'] != 1) {
-                                echo "<option id='user_id' name='user_id' value='" . $user['user_id'] . "' class='search-option'>" . $user['user_name'] . "</option>";
+                                echo "<option id='user_id' name='user_id' value='" . h($user['user_id']) . "' class='search-option'>" . h($user['user_name']) . "</option>";
                             }
                         }
                     }
@@ -322,7 +313,7 @@ if ($projectsResult && $ordersResult) {
                         $clients = $result->fetchAll(PDO::FETCH_ASSOC);
 
                         foreach ($clients as $client) {
-                            echo "<option value='" . $client['client_name'] . "' class='filter_search-option'>" . $client['client_name'] . "</option>";
+                            echo "<option value='" . h($client['client_name']) . "' class='filter_search-option'>" . h($client['client_name']) . "</option>";
                         }
                     }
                 } catch (PDOException $e) {
@@ -348,7 +339,7 @@ if ($projectsResult && $ordersResult) {
 
                         foreach ($users as $user) {
                             if ($user['user_name'] != $user_name && $user['permission_level'] != 1) {
-                                echo "<option value='" . $user['user_name'] . "' class='filter_search-option'>" . $user['user_name'] . "</option>";
+                                echo "<option value='" . h($user['user_name']) . "' class='filter_search-option'>" . h($user['user_name']) . "</option>";
                             }
                         }
                     }
@@ -409,7 +400,6 @@ if ($projectsResult && $ordersResult) {
             </label>
 
         </form>
-        </form>
 
         <button id="clearProject" onclick="clearProjectFilter();">Löchen</button>
     </div>
@@ -432,12 +422,12 @@ if ($projectsResult && $ordersResult) {
             foreach ($projects as $project) {
                 $projectId = $project['project_id'];
         ?>
-                <tr class="project-row status-<?php echo $project['project_status']; ?>"
-    data-status="<?php echo $project['project_status']; ?>">
-                    <td><?php echo $projectId; ?></td>
-                    <td><a href="projects/?id=<?php echo $projectId; ?>"><?php echo $project['project_name']; ?></a></td>
-                    <td><a href="clients/?id=<?php echo $project['client_id']; ?>"><?php echo $project['client_name']; ?></a></td>
-                    <td><a href="users/?id=<?php echo $project['user_name']; ?>"><?php echo $project['user_name']; ?></a></td>
+                <tr class="project-row status-<?php echo h($project['project_status']); ?>"
+    data-status="<?php echo h($project['project_status']); ?>">
+                    <td><?php echo h($projectId); ?></td>
+                    <td><a href="projects/?id=<?php echo h($projectId); ?>"><?php echo h($project['project_name']); ?></a></td>
+                    <td><a href="clients/?id=<?php echo h($project['client_id']); ?>"><?php echo h($project['client_name']); ?></a></td>
+                    <td><a href="users/?id=<?php echo h($project['user_name']); ?>"><?php echo h($project['user_name']); ?></a></td>
                     <td>
                         <ul>
                             <?php if (isset($orders[$projectId])) {
@@ -445,14 +435,14 @@ if ($projectsResult && $ordersResult) {
                                     if ($order['order_order'] == "") { ?>
                                         <li>N/A</li>
                                     <?php } else { ?>
-                                        <li><?php echo $order['order_order']; ?></li>
+                                        <li><?php echo h($order['order_order']); ?></li>
                             <?php }
                                 }
                             } ?>
                         </ul>
                     </td>
 
-                    <td class="status-<?php echo $project['project_status']; ?>">
+                    <td class="status-<?php echo h($project['project_status']); ?>">
                         <?php
                         if (isset($orders[$projectId])) {
                             $totalOrders = count($orders[$projectId]);
@@ -472,8 +462,8 @@ if ($projectsResult && $ordersResult) {
                             $progressBar= '
                             <div class="progress-bar-wrapper">
                                 <div class="progress-bar-container">
-                                    <div id="' . $progressBarId . '" class="progress-bar-bar">
-                                        <span id="' . $progressTextId . '" class="progress-bar-text">0%</span>
+                                    <div id="' . h($progressBarId) . '" class="progress-bar-bar">
+                                        <span id="' . h($progressTextId) . '" class="progress-bar-text">0%</span>
                                     </div>
                                 </div>
                                 <div class="progress-info">
@@ -482,7 +472,7 @@ if ($projectsResult && $ordersResult) {
                             </div>
 
                             <script>
-                                updateProgressBar(' . $progress . ', "' . $progressBarId . '", "' . $progressTextId . '");
+                                updateProgressBar(<?= pm_json_script($progress) ?>, <?= pm_json_script($progressBarId) ?>, <?= pm_json_script($progressTextId) ?>);
                             </script>
 
                         ';
@@ -523,7 +513,7 @@ if ($projectsResult && $ordersResult) {
                             <?php if ($project['project_status'] === 'in_progress' || $project['project_status'] === 'completed') { ?>
                                 <!-- Rechnung erstellen -->
                                 <form class="write_bill" action="write_bill" method="get">
-                                    <input type="hidden" name="id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="id" value="<?php echo h($projectId); ?>">
                                     <input type="hidden" name="back" value="back">
                                     <button class="link" type="submit">Rechnung erstellen</button>
                                 </form>
@@ -532,7 +522,7 @@ if ($projectsResult && $ordersResult) {
                                 <br>
                                 <!-- Rechnung gestellt -->
                                 <form action="update_project_status.php" method="post">
-                                    <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="project_id" value="<?php echo h($projectId); ?>">
                                     <input type="hidden" name="action" value="toggle_invoice_sent">
                                     <button class="link" type="submit">Rechnung gestellt</button>
                                 </form>
@@ -541,7 +531,7 @@ if ($projectsResult && $ordersResult) {
                                 <br>
                                 <!-- Rechnung als bezahlt markieren -->
                                 <form action="update_project_status.php" method="post">
-                                    <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="project_id" value="<?php echo h($projectId); ?>">
                                     <input type="hidden" name="action" value="toggle_paid">
                                     <button class="link" type="submit">Rechnung bezahlt</button>
                                 </form>
@@ -550,7 +540,7 @@ if ($projectsResult && $ordersResult) {
                                 <br>
                                 <!-- Rechnung als bezahlt markieren -->
                                 <form action="update_project_status.php" method="post">
-                                    <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="project_id" value="<?php echo h($projectId); ?>">
                                     <input type="hidden" name="action" value="archive">
                                     <button class="link" type="submit">Archivieren</button>
                                 </form>
@@ -559,7 +549,7 @@ if ($projectsResult && $ordersResult) {
                                 <br>
                                 <!-- Rechnung als bezahlt markieren -->
                                 <form action="update_project_status.php" method="post">
-                                    <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="project_id" value="<?php echo h($projectId); ?>">
                                     <input type="hidden" name="action" value="unarchive">
                                     <button class="link" type="submit">Archivierung aufheben</button>
                                 </form>
@@ -573,7 +563,7 @@ if ($projectsResult && $ordersResult) {
                                     method="post"
                                     onsubmit="return confirm('Bist du sicher, dass du dieses Projekt wirklich löschen willst?\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!');">
                                     
-                                    <input type="hidden" name="project_id" value="<?php echo $projectId; ?>">
+                                    <input type="hidden" name="project_id" value="<?php echo h($projectId); ?>">
                                     <button class="link danger" type="submit">
                                         Projekt löschen
                                     </button>

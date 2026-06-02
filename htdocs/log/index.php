@@ -59,9 +59,9 @@ include "../mysql.php";
         </tr>
         <?php foreach ($rows as $row): ?>
             <tr>
-                <td><?php echo htmlspecialchars($row['time']); ?></td>
-                <td><a href="../users/<?php echo $row['user_id']; ?>"><?php echo $row['user_id']; ?></a></td>
-                <td><?php echo htmlspecialchars($row['action']); ?></td>
+                <td><?php echo h($row['time']); ?></td>
+                <td><a href="../users/<?php echo h($row['user_id']); ?>"><?php echo h($row['user_id']); ?></a></td>
+                <td><?php echo h($row['action']); ?></td>
             </tr>
         <?php endforeach; ?>
     </table>

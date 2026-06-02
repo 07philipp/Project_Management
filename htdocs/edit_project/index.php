@@ -19,12 +19,14 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     $projectNumber = $_GET['id'];
     include('../mysql.php');
 
-    $projectQuery = "SELECT project_name, project_client_id, project_address, project_description, project_user_id, project_due_date
-        FROM project
-        WHERE project_id = '$projectNumber'";
-    $projectResult = $mysql->query($projectQuery);
-    if ($projectResult) {
-        $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+    $projectStmt = $mysql->prepare(
+        'SELECT project_name, project_client_id, project_address, project_description, project_user_id, project_due_date
+         FROM project
+         WHERE project_id = :project_id'
+    );
+    $projectStmt->execute([':project_id' => $projectNumber]);
+    if ($projectStmt) {
+        $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
         $projectName = $projectData['project_name'];
         $projectClientId = $projectData['project_client_id'];
         $projectAddress = $projectData['project_address'];
@@ -32,24 +34,23 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
         $projectUserId = $projectData['project_user_id'];
         $projectDate = $projectData['project_due_date'];
 
-        $clientQuery = "SELECT * 
-            FROM client
-            WHERE client_id = '$projectClientId'";
-        $clientResult = $mysql->query($clientQuery);
-        $clientData = $clientResult->fetch(PDO::FETCH_ASSOC);
+        $clientStmt = $mysql->prepare('SELECT * FROM client WHERE client_id = :client_id');
+        $clientStmt->execute([':client_id' => $projectClientId]);
+        $clientData = $clientStmt->fetch(PDO::FETCH_ASSOC);
         $clientName = $clientData['client_name'];
 
-        $userQuery = "SELECT * 
-            FROM user
-            WHERE user_id = '$projectUserId'";
-        $userResult = $mysql->query($userQuery);
-        $userData = $userResult->fetch(PDO::FETCH_ASSOC);
+        $userStmt = $mysql->prepare('SELECT * FROM user WHERE user_id = :user_id');
+        $userStmt->execute([':user_id' => $projectUserId]);
+        $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
         $userName = $userData['user_name'];
 
-        $ordersQuery =  "SELECT order_id, order_project_id, order_order, order_amount 
-                            FROM `order` 
-                            WHERE order_project_id = '$projectNumber'";
-        $ordersResult = $mysql->query($ordersQuery);
+        $ordersStmt = $mysql->prepare(
+            'SELECT order_id, order_project_id, order_order, order_amount
+             FROM `order`
+             WHERE order_project_id = :project_id'
+        );
+        $ordersStmt->execute([':project_id' => $projectNumber]);
+        $ordersResult = $ordersStmt;
 
         $orders = array();
 
@@ -78,12 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     <script src="../js/notification.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
 
@@ -103,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
         function saveChanges(inputField) {
             var params = new URLSearchParams();
-            params.append("project_id", '<?php echo $projectNumber; ?>');
+            params.append("project_id", <?= pm_json_script($projectNumber) ?>);
             params.append(inputField.name, inputField.value);
 
             var xhr = new XMLHttpRequest();
@@ -117,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
         function changeClient(inputField) {
             var clientId = inputField.value;
-            var projectId = '<?php echo $projectNumber; ?>';
+            var projectId = <?= pm_json_script($projectNumber) ?>;
 
             var params = new URLSearchParams();
             params.append("project_id", projectId);
@@ -137,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
         function changeUser(inputField) {
             var usertId = inputField.value;
-            var projectId = '<?php echo $projectNumber; ?>';
+            var projectId = <?= pm_json_script($projectNumber) ?>;
 
             var params = new URLSearchParams();
             params.append("project_id", projectId);
@@ -170,14 +168,14 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
             <th>Abgabedatum</th>
         </tr>
         <tr>
-            <td><input class='input' name="project" type="text" value='<?php echo "$projectName"; ?>' onchange="saveChanges(this)"></td>
+            <td><input class='input' name="project" type="text" value='<?php echo h($projectName); ?>' onchange="saveChanges(this)"></td>
             <td>
                 <div class="select-wrapper_S">
                     <input type="text" id="searchInput" class="search-input_S" onchange="searchFields(this)" placeholder="Suchen...">
                     <br>
                     <select style="margin-bottom: 10px; margin-left: 15px;" id="client_id" name="client_id" class="custom-select_S" onchange="changeClient(this)" required>
                         <?php
-                        echo "<option class='search-option_S used' id='client_id' name='client_id' value='" . $clientData['client_id'] . "' >" . $clientName . "</option>";
+                        echo "<option class='search-option_S used' id='client_id' name='client_id' value='" . h($clientData['client_id']) . "' >" . h($clientName) . "</option>";
 
                         try {
                             $selectQuery = "SELECT * FROM client";
@@ -188,7 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
                                 foreach ($clients as $client) {
                                     if ($client['client_id'] != $clientData['client_id']) {
-                                        echo "<option id='client_id' name='client_id' value='" . $client['client_id'] . "' class='search-option_S'>" . $client['client_name'] . "</option>";
+                                        echo "<option id='client_id' name='client_id' value='" . h($client['client_id']) . "' class='search-option_S'>" . h($client['client_name']) . "</option>";
                                     }
                                 }
                             }
@@ -205,7 +203,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                     <br>
                     <select style="margin-bottom: 10px; margin-left: 15px;" id="user_id" name="user_id" class="custom-select_S" onchange="changeUser(this)" required>
                         <?php
-                        echo "<option class='search-option_S used' id='user_id' name='user_id' value='" . $userData['user_id'] . "' >" . $userName . "</option>";
+                        echo "<option class='search-option_S used' id='user_id' name='user_id' value='" . h($userData['user_id']) . "' >" . h($userName) . "</option>";
 
                         try {
                             $selectQueryU = "SELECT * FROM user";
@@ -217,7 +215,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                                 foreach ($users as $user) {
                                     if ($user['user_id'] != $userData['user_id']) {
                                         if ($user['user_name'] != $user_name && $user['permission_level'] != 1) {
-                                            echo "<option id='user_id' name='user_id' value='" . $user['user_id'] . "' class='search-option_S'>" . $user['user_name'] . "</option>";
+                                            echo "<option id='user_id' name='user_id' value='" . h($user['user_id']) . "' class='search-option_S'>" . h($user['user_name']) . "</option>";
                                         }
                                     }
                                 }
@@ -233,7 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                 <ul>
                     <?php if (isset($orders[$projectNumber])) {
                         foreach ($orders[$projectNumber] as $order) { ?>
-                            <li><input class='input' name='order' type='text' value="<?php echo $order['order_order']; ?>" onchange="saveChangesOrder(this, '<?php echo $order['order_id']; ?>')" /></li>
+                            <li><input class='input' name='order' type='text' value="<?php echo h($order['order_order']); ?>" onchange="saveChangesOrder(this, <?php echo pm_json_script($order['order_id']); ?>)" /></li>
                     <?php }
                     } ?>
                 </ul>
@@ -242,14 +240,14 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                 <ul>
                     <?php if (isset($orders[$projectNumber])) {
                         foreach ($orders[$projectNumber] as $order) { ?>
-                            <li><input class='input' name='amount' type='number' value="<?php echo $order['order_amount']; ?>" onchange="saveChangesOrder(this, '<?php echo $order['order_id']; ?>')" /></li>
+                            <li><input class='input' name='amount' type='number' value="<?php echo h($order['order_amount']); ?>" onchange="saveChangesOrder(this, <?php echo pm_json_script($order['order_id']); ?>)" /></li>
                     <?php }
                     } ?>
                 </ul>
             </td>
-            <td><input class='input' name="adress" type="text" value='<?php echo "$projectAddress"; ?>' onchange="saveChanges(this)"></td>
-            <td><input class='input' name="des" type="text" value='<?php echo "$projectDescription"; ?>' onchange="saveChanges(this)"></td>
-            <td><input class='input' name="date" type="date" value="<?php echo $projectDate; ?>" onchange="saveChanges(this);" style="max-width: 110px;"></td>
+            <td><input class='input' name="adress" type="text" value='<?php echo h($projectAddress); ?>' onchange="saveChanges(this)"></td>
+            <td><input class='input' name="des" type="text" value='<?php echo h($projectDescription); ?>' onchange="saveChanges(this)"></td>
+            <td><input class='input' name="date" type="date" value="<?php echo h($projectDate); ?>" onchange="saveChanges(this);" style="max-width: 110px;"></td>
         </tr>
         <tr>
             <td>
@@ -259,7 +257,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
             <td>
             </td>
             <form action='../edit_order.php' method='post'>
-                <input type='hidden' name='projectNumber' value='<?php echo "$projectNumber" ?>'>
+                <input type='hidden' name='projectNumber' value='<?php echo h($projectNumber); ?>'>
                 <input type='hidden' name='back' value='edit'>
                 <td>
                     <button name="addorder" type="submit">Auftrag hinzufügen</button>
@@ -274,7 +272,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
             </td>
         </tr>
     </table>
-    <a class="link" href='../projects/?id=<?php echo "$projectNumber"; ?>'>Fertig</a>
+    <a class="link" href='../projects/?id=<?php echo h($projectNumber); ?>'>Fertig</a>
 
     <div id="notification" class="notification" onclick="hideNotification()">
         <p id="notification-message"></p>

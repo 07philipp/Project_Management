@@ -29,7 +29,7 @@ function renderProjectStatusBadge(string $status, bool $large = false): string
     $text = $labels[$status] ?? $status;
     $size = $large ? ' large' : '';
 
-    return "<span class='status-badge status-$status$size'>$text</span>";
+    return "<span class='status-badge status-" . h($status) . h($size) . "'>" . h($text) . "</span>";
 }
 
 
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?php echo htmlspecialchars($userName); ?></title>
+        <title><?php echo h($userName); ?></title>
         <link rel="stylesheet" href="../css/style.css">
         <link rel="stylesheet" href="../css/form.css">
         <script src="../js/toggle.js"></script>
@@ -68,10 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 
     <body>
         <div class="users-container">
-            <h1><?php echo htmlspecialchars($userName); ?></h1>
-            <p>Benutzer-ID: <?php echo htmlspecialchars($userData['user_id']); ?></p>
-            <p>Benutzername: <?php echo htmlspecialchars($userName); ?></p>
-            <p>Berechtigungsstufe: <?php echo htmlspecialchars($userPermission); ?></p>
+            <h1><?php echo h($userName); ?></h1>
+            <p>Benutzer-ID: <?php echo h($userData['user_id']); ?></p>
+            <p>Benutzername: <?php echo h($userName); ?></p>
+            <p>Berechtigungsstufe: <?php echo h($userPermission); ?></p>
 
             <h2>Projekte:</h2>
             <ul>
@@ -85,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                 } else {
                     while ($project = $stmt->fetch(PDO::FETCH_ASSOC)) {
                         if($project['project_status'] != "archived"){
-                            echo "<li><a href='../projects/?id=".$project['project_id'] ."'>
-                            " . htmlspecialchars($project['project_name']) . "</a>"
+                            echo "<li><a href='../projects/?id=" . h($project['project_id']) . "'>
+                            " . h($project['project_name']) . "</a>"
                             . renderProjectStatusBadge($project['project_status']) . "</li>";
                         }
                     }
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 
             <h2>Neues Projekt erstellen:</h2>
             <form class="projectForm" id="projectForm" action='../add_project.php' method='post'>
-                <input type='hidden' name='user_id' value='<?php echo $userId; ?>'>
+                <input type='hidden' name='user_id' value='<?php echo h($userId); ?>'>
                 <label for="project_name">Projektname:</label>
                 <input id="project_name" name="project_name" required>
                 <br>
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                 $output = str_replace('!count', $count, $output);
                 ?>
                 <label for="project_id">Project ID:</label>
-                <input id="project_id" name="project_id" value="<?php echo $output; ?>" required>
+                <input id="project_id" name="project_id" value="<?php echo h($output); ?>" required>
                 <br>
                 <label for="project_order">Auftrag:</label>
                 <input id="project_order" name="project_order">
@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             <br>
             <div>
                 <form class="delete_use" action="../delete_user.php" method="post" style="display:inline;">
-                    <input type="hidden" name="user_id" value="<?php echo $userId; ?>">
+                    <input type="hidden" name="user_id" value="<?php echo h($userId); ?>">
                     <button class="link" type="submit">Benutzer löschen</button>
                 </form>
                 <button onclick="location.href='../users/'">Benutzer</button>
@@ -264,10 +264,9 @@ if ($userResult && $projectsResult && $ordersResult) {
     <script src="../js/notification.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
 
@@ -344,7 +343,7 @@ if ($userResult && $projectsResult && $ordersResult) {
                                     } ?>>
                 <td><?php
                     if ($user['user_name'] != $user_name) { ?>
-                        <a href="?id=<?php echo $user['user_name']; ?>"><?php echo htmlspecialchars($user['user_name']); ?></a>
+                        <a href="?id=<?php echo h($user['user_name']); ?>"><?php echo h($user['user_name']); ?></a>
                 </td>
                 <td>
 
@@ -369,8 +368,8 @@ if ($userResult && $projectsResult && $ordersResult) {
 
                             <div class="progress-bar-wrapper">
                                 <div class="progress-bar-container">
-                                    <div id="<?php echo $progressBarId; ?>" class="progress-bar-bar">
-                                        <span id="<?php echo $progressTextId; ?>" class="progress-bar-text">0%</span>
+                                    <div id="<?php echo h($progressBarId); ?>" class="progress-bar-bar">
+                                        <span id="<?php echo h($progressTextId); ?>" class="progress-bar-text">0%</span>
                                     </div>
                                 </div>
                                 <div class="progress-info">
@@ -379,7 +378,7 @@ if ($userResult && $projectsResult && $ordersResult) {
                             </div>
 
                             <script>
-                                updateProgressBar(<?php echo $progress; ?>, "<?php echo $progressBarId; ?>", "<?php echo $progressTextId; ?>");
+                                updateProgressBar(<?= pm_json_script($progress) ?>, <?= pm_json_script($progressBarId) ?>, <?= pm_json_script($progressTextId) ?>);
                             </script>
 
                     <?php
@@ -402,7 +401,7 @@ if ($userResult && $projectsResult && $ordersResult) {
                     <?php if (isset($projects[$userId])) {
                         foreach ($projects[$userId] as $project) { ?>
                             <li><a
-                                    href="../projects/?id=<?php echo $project['project_id']; ?>"><?php echo htmlspecialchars($project['project_name']); ?></a>
+                                    href="../projects/?id=<?php echo h($project['project_id']); ?>"><?php echo h($project['project_name']); ?></a>
                             </li>
                     <?php }
                     } else {
@@ -415,7 +414,7 @@ if ($userResult && $projectsResult && $ordersResult) {
                 if ($user['user_name'] != $user_name) {
                 ?>
                     <select id="permission" name="permission"
-                        onchange="updatePermission(<?php echo $userId; ?>, this.value);">
+                        onchange="updatePermission(<?php echo pm_json_script($userId); ?>, this.value);">
                         <?php for ($i = 1; $i <= 4; $i++): ?>
                             <option value="<?php echo $i; ?>" <?php echo ($user['permission_level'] == $i) ? 'class="used" selected' : ''; ?>><?php echo $i; ?></option>
                         <?php endfor; ?>
@@ -432,11 +431,11 @@ if ($userResult && $projectsResult && $ordersResult) {
                 ?>
                     <form class="delete_user" action="../delete_user.php" method="post" style="display:inline;" 
                     onsubmit="return confirm('Bist du sicher, dass du diesen Nutzer wirklich löschen willst?\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!');">
-                        <input type="hidden" name="user_id" value="<?php echo $userId; ?>">
+                        <input type="hidden" name="user_id" value="<?php echo h($userId); ?>">
                         <button class="space link" type="submit">Nutzer löschen</button>
                     </form>
 
-                    <a class="space link" href="../change_password_admin/?id=<?php echo $userId; ?>">
+                    <a class="space link" href="../change_password_admin/?id=<?php echo h($userId); ?>">
                         Passwort ändern
                     </a>
 
@@ -445,7 +444,7 @@ if ($userResult && $projectsResult && $ordersResult) {
                     if (is_user_logged_in($userId, $mysql)) {
                     ?>
                         <form class="logout_user" action="../session_loguot.php" method="post" style="display:inline;">
-                            <input type="hidden" name="user_id" value="<?php echo $userId; ?>">
+                            <input type="hidden" name="user_id" value="<?php echo h($userId); ?>">
                             <button class="space link" type="submit">Nutzer abmelden</button>
                         </form>
                 <?php

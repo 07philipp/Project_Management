@@ -28,7 +28,7 @@ function renderProjectStatusBadge(string $status, bool $large = false): string
     $text = $labels[$status] ?? $status;
     $size = $large ? ' large' : '';
 
-    return "<span class='status-badge status-$status$size'>$text</span>";
+    return "<span class='status-badge status-" . h($status) . h($size) . "'>" . h($text) . "</span>";
 }
 
 
@@ -43,13 +43,15 @@ if (!is_dir($uploadFolder)) {
     file_put_contents("$uploadFolder/.htaccess", "Order deny,allow\nDeny from all\n");
 }
 
-$projectQuery = "SELECT project_name, project_client_id, project_address, project_description, project_user_id, project_due_date, project_created_date, 
-project_status, completed_date, invoice_sent_date, invoice_paid_date
-FROM project
-WHERE project_id = '$projectNumber'";
-$projectResult = $mysql->query($projectQuery);
-if ($projectResult) {
-    $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+$projectStmt = $mysql->prepare(
+    'SELECT project_name, project_client_id, project_address, project_description, project_user_id, project_due_date, project_created_date,
+            project_status, completed_date, invoice_sent_date, invoice_paid_date
+     FROM project
+     WHERE project_id = :project_id'
+);
+$projectStmt->execute([':project_id' => $projectNumber]);
+if ($projectStmt) {
+    $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
     $projectName = $projectData['project_name'];
     $projectClientId = $projectData['project_client_id'];
     $projectAddress = $projectData['project_address'];
@@ -65,25 +67,24 @@ if ($projectResult) {
     $lockProject = in_array($projectStatus, ['invoice_sent', 'paid', 'archived']);
 
 
-    $clientQuery = "SELECT client_name 
-    FROM client
-    WHERE client_id = '$projectClientId'";
-    $clientResult = $mysql->query($clientQuery);
-    $clientData = $clientResult->fetch(PDO::FETCH_ASSOC);
+    $clientStmt = $mysql->prepare('SELECT client_name FROM client WHERE client_id = :client_id');
+    $clientStmt->execute([':client_id' => $projectClientId]);
+    $clientData = $clientStmt->fetch(PDO::FETCH_ASSOC);
     $clientName = $clientData['client_name'];
 
 
-    $Query = "SELECT user_name 
-    FROM user
-    WHERE user_id = '$projectUserId'";
-    $Result = $mysql->query($Query);
-    $Data = $Result->fetch(PDO::FETCH_ASSOC);
-    $projectUserName = $Data['user_name'];
+    $userStmt = $mysql->prepare('SELECT user_name FROM user WHERE user_id = :user_id');
+    $userStmt->execute([':user_id' => $projectUserId]);
+    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+    $projectUserName = $userData['user_name'];
 
-    $ordersQuery = "SELECT order_id, order_project_id, order_order, order_amount, order_checked
-                     FROM `order` 
-                     WHERE order_project_id = '$projectNumber'";
-    $ordersResult = $mysql->query($ordersQuery);
+    $ordersStmt = $mysql->prepare(
+        'SELECT order_id, order_project_id, order_order, order_amount, order_checked
+         FROM `order`
+         WHERE order_project_id = :project_id'
+    );
+    $ordersStmt->execute([':project_id' => $projectNumber]);
+    $ordersResult = $ordersStmt;
 
     $orders = array();
 
@@ -121,12 +122,15 @@ if (isset($_GET['file'])) {
 }
 
 
-$timeQuery = "SELECT u.user_id, u.user_name, o.order_order, t.start_time, t.end_time, t.duration, t.time_id
-            FROM `time` t 
-            JOIN `user` u ON t.user_id = u.user_id 
-            JOIN `order` o ON t.order_id = o.order_id 
-            WHERE t.project_id =  '$projectNumber'";
-$timeResult = $mysql->query($timeQuery);
+$timeStmt = $mysql->prepare(
+    'SELECT u.user_id, u.user_name, o.order_order, t.start_time, t.end_time, t.duration, t.time_id
+     FROM `time` t
+     JOIN `user` u ON t.user_id = u.user_id
+     JOIN `order` o ON t.order_id = o.order_id
+     WHERE t.project_id = :project_id'
+);
+$timeStmt->execute([':project_id' => $projectNumber]);
+$timeResult = $timeStmt;
 
 $times = array();
 
@@ -143,21 +147,18 @@ if ($timeResult) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $projectName; ?></title>
+    <title><?php echo h($projectName); ?></title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/notification.css">
     <script src="../js/notification.js"></script>
     <script src="../js/option_search.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
-            var toggleTime = "<?php echo isset($_SESSION['stopping_time']) ? $_SESSION['stopping_time'] : false; ?>";
+            var toggleTime = <?= pm_json_script(isset($_SESSION['stopping_time']) ? $_SESSION['stopping_time'] : false) ?>;
 
             const timeS = document.getElementById('time_select');
             timeS.style.display = toggleTime ? 'none' : 'block';
@@ -199,14 +200,14 @@ if ($timeResult) {
 </head>
 
 <body>
-    <h1><?php echo $projectName; ?></h1>
-    <p>Projectnummer: <?php echo $projectNumber; ?></p>
-    <p>Auftraggeber: <a href='../clients/?id=<?php echo $projectClientId; ?>'><?php echo $clientName; ?></a></p>
-    <p>Betreuer: <a href='../users/?id=<?php echo $projectUserName; ?>'><?php echo $projectUserName; ?></a></p>
-    <p>Beschreibung: <?php echo $projectDescription; ?></p>
-    <p>Adresse: <?php echo $projectAddress; ?></p>
-    <p>Abgabe: <?php if (($projectStatus === 'in_progress' || $projectStatus === 'completed') && $date !== '') { 
-                        echo date('d.m.Y', strtotime($project['project_due_date'])); 
+    <h1><?php echo h($projectName); ?></h1>
+    <p>Projectnummer: <?php echo h($projectNumber); ?></p>
+    <p>Auftraggeber: <a href='../clients/?id=<?php echo h($projectClientId); ?>'><?php echo h($clientName); ?></a></p>
+    <p>Betreuer: <a href='../users/?id=<?php echo h($projectUserName); ?>'><?php echo h($projectUserName); ?></a></p>
+    <p>Beschreibung: <?php echo h($projectDescription); ?></p>
+    <p>Adresse: <?php echo h($projectAddress); ?></p>
+    <p>Abgabe: <?php if (($projectStatus === 'in_progress' || $projectStatus === 'completed') && $date !== '') {
+                        echo date('d.m.Y', strtotime($date));
                     }else{ ?>
                     ---
                     <?php } ?></p>
@@ -243,16 +244,16 @@ if ($timeResult) {
 
                     echo "<li>
                             <form action='../edit_checklist.php?action=edit' method='POST' style='display:inline;'>
-                                <input type='hidden' name='checklist_id' value='{$todo['checklist_id']}'>
-                                <input type='hidden' name='project_id' value='{$projectNumber}'>
-                                <input type='hidden' name='title' value='{$todo['checklist_name']}'>
+                                <input type='hidden' name='checklist_id' value='" . h($todo['checklist_id']) . "'>
+                                <input type='hidden' name='project_id' value='" . h($projectNumber) . "'>
+                                <input type='hidden' name='title' value='" . h($todo['checklist_name']) . "'>
                                 <input type='checkbox' name='is_done' onChange='this.form.submit()' $checked>
-                                {$todo['checklist_name']}
+                                " . h($todo['checklist_name']) . "
                             </form>
 
                             <form action='../edit_checklist.php?action=delete_project' method='POST' style='display:inline;'>
-                                <input type='hidden' name='checklist_id' value='{$todo['checklist_id']}'>
-                                <input type='hidden' name='project_id' value='{$projectNumber}'>
+                                <input type='hidden' name='checklist_id' value='" . h($todo['checklist_id']) . "'>
+                                <input type='hidden' name='project_id' value='" . h($projectNumber) . "'>
                                 <button type='submit' style='background-color: transparent; color: red; padding-left: 0px;'>X</button>
                             </form>
                         </li>";
@@ -269,10 +270,10 @@ if ($timeResult) {
                                         class='input'
                                         name='order'
                                         type='text'
-                                        value="<?php echo $order['order_order']; ?>"
-                                        onchange="saveChanges(this, '<?php echo $order['order_id']; ?>')" 
+                                        value="<?php echo h($order['order_order']); ?>"
+                                        onchange="saveChanges(this, <?php echo pm_json_script($order['order_id']); ?>)" 
                                         <?php if($lockProject){
-                                            echo ' disabled'; } ?> /> <?php } else echo $order['order_amount']; ?> </li>
+                                            echo ' disabled'; } ?> /> <?php } else echo h($order['order_amount']); ?> </li>
                     <?php   }
                     } ?>
                 </ul>
@@ -288,7 +289,7 @@ if ($timeResult) {
                                         name='check'
                                         type='checkbox'
                                         value="check"
-                                        onchange="saveChanges(this, '<?php echo $order['order_id']; ?>')"
+                                        onchange="saveChanges(this, <?php echo pm_json_script($order['order_id']); ?>)"
                                         <?php if ($order['order_checked'] == 'checked') {
                                             echo 'checked';
                                         }
@@ -310,18 +311,18 @@ if ($timeResult) {
             <?php if (3 <= $_SESSION['permission_level'] && !$lockProject) { ?>
                 <td>
                     <form action='../edit_order.php' method='post'>
-                        <input type='hidden' name='projectNumber' value='<?php echo $projectNumber; ?>'>
+                        <input type='hidden' name='projectNumber' value='<?php echo h($projectNumber); ?>'>
                         <button class='space' name='addorder' type='submit'>Auftrag hinzufügen</button>
                         <button name='deleteorder' type='submit'>Auftrag löschen</button>
                     </form>
                 </td>
                 <td>
                     <form class='space' action='../edit_project/' method='get'>
-                        <input type='hidden' name='id' value='<?php echo $projectNumber; ?>'>
+                        <input type='hidden' name='id' value='<?php echo h($projectNumber); ?>'>
                         <button class='link' type='submit'>Projekt bearbeiten</button>
                     </form>
                     <form class='space' action='../write_bill/' method='get'>
-                        <input type='hidden' name='id' value='<?php echo $projectNumber; ?>'>
+                        <input type='hidden' name='id' value='<?php echo h($projectNumber); ?>'>
                         <button class='link' type='submit'>Rechnung erstellen</button>
                     </form>
                     <form class="space"
@@ -329,7 +330,7 @@ if ($timeResult) {
                         method="post"
                         onsubmit="return confirm('Bist du sicher, dass du dieses Projekt wirklich löschen willst?\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!');">
                         
-                        <input type="hidden" name="project_id" value="<?php echo $projectNumber; ?>">
+                        <input type="hidden" name="project_id" value="<?php echo h($projectNumber); ?>">
                         <button class="link danger" type="submit">
                             Projekt löschen
                         </button>
@@ -355,7 +356,7 @@ if ($timeResult) {
 
 <?php if (3 <= $_SESSION['permission_level']): ?>
 <form method="post" action="../update_project_status.php">
-    <input type="hidden" name="project_id" value="<?= $projectNumber ?>">
+    <input type="hidden" name="project_id" value="<?= h($projectNumber) ?>">
     <input type="hidden" name="action" value="toggle_invoice_sent">
 
     <label>
@@ -381,7 +382,7 @@ if ($timeResult) {
 
 <?php if (3 <= $_SESSION['permission_level'] && $invoiceSent): ?>
 <form method="post" action="../update_project_status.php">
-    <input type="hidden" name="project_id" value="<?= $projectNumber ?>">
+    <input type="hidden" name="project_id" value="<?= h($projectNumber) ?>">
     <input type="hidden" name="action" value="toggle_paid">
 
     <label>
@@ -410,7 +411,7 @@ if ($timeResult) {
     <br>
     <h2>Neues ToDo für dieses Projekt</h2>
     <form action="../edit_checklist.php?action=create_project" method="POST">
-        <input type="hidden" name="id" value="<?php echo $projectNumber; ?>">
+        <input type="hidden" name="id" value="<?php echo h($projectNumber); ?>">
         <input type="text" class="search-input" name="title" placeholder="Titel" required>
         <button type="submit">Hinzufügen</button>
     </form>
@@ -430,11 +431,11 @@ if ($timeResult) {
             if ($times) {
                 foreach ($times as $time) { ?>
                     <tr>
-                        <td><a href="../users/?id=<?php echo $time['user_name']; ?>"><?php echo $time['user_name']; ?></a></td>
-                        <td><?php echo $time['order_order']; ?></td>
-                        <td><?php echo $time['start_time']; ?></td>
-                        <td><?php echo $time['end_time']; ?></td>
-                        <td><?php echo $time['duration']; ?></td>
+                        <td><a href="../users/?id=<?php echo h($time['user_name']); ?>"><?php echo h($time['user_name']); ?></a></td>
+                        <td><?php echo h($time['order_order']); ?></td>
+                        <td><?php echo h($time['start_time']); ?></td>
+                        <td><?php echo h($time['end_time']); ?></td>
+                        <td><?php echo h($time['duration']); ?></td>
                     </tr>
             <?php
                 }
@@ -447,7 +448,7 @@ if ($timeResult) {
 
         <form action="../add_time.php" method="post">
             <h3>Zeit hinzufügen</h3>
-            <input type="hidden" id="id" name="id" value="<?php echo $projectNumber; ?>">
+            <input type="hidden" id="id" name="id" value="<?php echo h($projectNumber); ?>">
             <label for="start">Startzeit</label>
             <input name="start" type="datetime-local"
                 required>
@@ -462,14 +463,17 @@ if ($timeResult) {
                     <?php
 
                     try {
-                        $selectQuery = "SELECT * FROM `order` WHERE order_project_id = '$projectNumber'";
-                        $result = $mysql->query($selectQuery);
+                        $orderSelectStmt = $mysql->prepare(
+                            'SELECT * FROM `order` WHERE order_project_id = :project_id'
+                        );
+                        $orderSelectStmt->execute([':project_id' => $projectNumber]);
+                        $result = $orderSelectStmt;
 
                         if ($result->rowCount() > 0) {
                             $orders = $result->fetchAll(PDO::FETCH_ASSOC);
 
                             foreach ($orders as $order) {
-                                echo "<option id='order_id' name='order_id' value='" . $order['order_id'] . "' class='search-option'>" . $order['order_order'] . "</option>";
+                                echo "<option id='order_id' name='order_id' value='" . h($order['order_id']) . "' class='search-option'>" . h($order['order_order']) . "</option>";
                             }
                         }
                     } catch (PDOException $e) {
@@ -482,7 +486,7 @@ if ($timeResult) {
         </form>
         <br>
         <br>
-        <a class="link" href="../edit_time/?id=<?php echo $projectNumber; ?>">Bearbeiten</a>
+        <a class="link" href="../edit_time/?id=<?php echo h($projectNumber); ?>">Bearbeiten</a>
         <br>
 
         <?php if (3 <= $_SESSION['permission_level'] || $projectUserId == $_SESSION['user_id']) { ?>
@@ -493,20 +497,20 @@ if ($timeResult) {
                 foreach ($files as $file) {
                     if ($file != "." && $file != ".." && $file != ".htaccess") {
                         echo "<li>
-        <ul>$file
+        <ul>" . h($file) . "
         <form action='../upload.php' method='post' style='display:inline'>
-            <input type='hidden' name='p_id' value=" .  $projectNumber . ">
+            <input type='hidden' name='p_id' value='" . h($projectNumber) . "'>
             <input type='hidden' name='action' value='download'>
-            <input type='hidden' name='file' value='$file'>
+            <input type='hidden' name='file' value='" . h($file) . "'>
             <button type='submit'>Herunterladen</button>
         </form>
         <form action='../upload.php' method='post' style='display:inline'>
-            <input type='hidden' name='p_id' value=" .  $projectNumber . ">
+            <input type='hidden' name='p_id' value='" . h($projectNumber) . "'>
             <input type='hidden' name='action' value='delete'>
-            <input type='hidden' name='file' value='$file'>
+            <input type='hidden' name='file' value='" . h($file) . "'>
             <button type='submit'>Löschen</button>
         </form>
-        <button onclick='copyDownloadLink(\"" .  $projectNumber . '","' . $file . "\")'>Link kopieren</button>
+        <button type='button' onclick='copyDownloadLink(" . pm_json_script($projectNumber) . ", " . pm_json_script($file) . ")'>Link kopieren</button>
         </ul>
     </li>";
                     }
@@ -517,7 +521,7 @@ if ($timeResult) {
 
             <div class=".upload-container">
                 <form action="../upload.php" method="post" enctype="multipart/form-data">
-                    <input type='hidden' name='p_id' value='<?php echo $projectNumber; ?>'>
+                    <input type='hidden' name='p_id' value='<?php echo h($projectNumber); ?>'>
                     <input type="hidden" name="action" value="create">
                     <input type="file" name="fileToUpload" required>
                     <button type="submit">Datei hochladen</button>
@@ -531,7 +535,7 @@ if ($timeResult) {
 <?php if ($projectStatus === 'archived' && 3 <= $_SESSION['permission_level']): ?>
 
 <form method="post" action="../update_project_status.php" style="margin-top:10px;">
-    <input type="hidden" name="project_id" value="<?php echo $projectNumber; ?>">
+    <input type="hidden" name="project_id" value="<?php echo h($projectNumber); ?>">
     <input type="hidden" name="action" value="unarchive">
 
     <button type="submit" class="link">
@@ -541,7 +545,7 @@ if ($timeResult) {
 <?php endif; ?>
  <?php if ($projectStatus === 'paid' && 3 <= $_SESSION['permission_level']): ?>
         <form action="../update_project_status.php" method="post" style="margin-top:10px;">
-            <input type="hidden" name="project_id" value="<?php echo $projectNumber; ?>">
+            <input type="hidden" name="project_id" value="<?php echo h($projectNumber); ?>">
             <input type="hidden" name="action" value="archive">
             <button class="link" type="submit">Archivieren</button>
         </form>

@@ -60,12 +60,9 @@ $projectIdCount = intval($projectIdCount);
     <title>Einstellungen</title>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
     </script>
@@ -138,8 +135,8 @@ $projectIdCount = intval($projectIdCount);
                 $globalTodos = json_decode($globalTodosRaw, true) ?? [];
 
                 foreach ($globalTodos as $todo) {
-                    $todoId = htmlspecialchars($todo['id']);
-                    $todoName = htmlspecialchars($todo['name']);
+                    $todoId = h($todo['id']);
+                    $todoName = h($todo['name']);
                     echo "<li>$todoName 
                         <button type='submit' name='delete_global_todo' value='$todoId' style='background-color: transparent; color: red; padding-left: 0px;' >X</button>
                     </li>";
@@ -184,11 +181,11 @@ $projectIdCount = intval($projectIdCount);
         <div class="settings-container">
             <label for="email_subject">Betreff der E-Mail:</label>
             <input type="text" id="email_subject" name="email_subject"
-                value="<?php echo htmlspecialchars($emailSubject); ?>" class="input" >
+                value="<?php echo h($emailSubject); ?>" class="input" >
             <br>
             <label for="email_body">Inhalt der E-Mail:</label>
             <textarea id="email_body" name="email_body" rows="4" class="input"
-                ><?php echo htmlspecialchars($emailBody); ?></textarea>
+                ><?php echo h($emailBody); ?></textarea>
         </div>
         <br>
 
@@ -198,7 +195,7 @@ $projectIdCount = intval($projectIdCount);
         <div class="settings-container">
             <label for="allowed_extensions">Erlaubte Dateiendungen (kommagetrennt):</label>
             <input type="text" id="allowed_extensions" name="allowed_extensions"
-                value="<?php echo htmlspecialchars($allowedExtensions); ?>" class="input" required>
+                value="<?php echo h($allowedExtensions); ?>" class="input" required>
         </div>
         <br>
 
@@ -208,16 +205,16 @@ $projectIdCount = intval($projectIdCount);
             <label for="project_id_temp">Projekt-ID Vorlage (Hinweis: !count wird durch die Zählernummer ersetzt, !time
                 durch das Erstellungsdatum):</label>
             <input type="text" id="project_id_temp" name="project_id_temp"
-                value="<?php echo htmlspecialchars($projectIdTemp); ?>" class="input" required>
+                value="<?php echo h($projectIdTemp); ?>" class="input" required>
             <label for="project_id_count">Projekt-ID Zähler (Aktuelle Zählernummer):</label>
             <input type="number" id="project_id_count" name="project_id_count"
-                value="<?php echo htmlspecialchars($projectIdCount); ?>" class="input" required>
+                value="<?php echo h($projectIdCount); ?>" class="input" required>
         </div>
         <br>
         <h2>Stundenlohn</h2>
         <div class="settings-container">
             <label for="hourly_wage">Standert Stundenlohn</label>
-            <input type="number" name="hourly_wage" id="hourly_wage" value="<?php echo htmlspecialchars($hourlyWage); ?>" class="input" required>
+            <input type="number" name="hourly_wage" id="hourly_wage" value="<?php echo h($hourlyWage); ?>" class="input" required>
         </div>
         <br>
 

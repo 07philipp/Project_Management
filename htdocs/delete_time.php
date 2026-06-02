@@ -13,12 +13,12 @@ if ($_SESSION["permission_level"] == 2) {
         $time_id = $_POST['id'];
         include("mysql.php");
 
-        $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$project_id'";
-        $projectResult = $mysql->query($projectQuery);
-        if ($projectResult) {
-            $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+        $projectStmt = $mysql->prepare(
+            'SELECT project_user_id FROM project WHERE project_id = :project_id'
+        );
+        $projectStmt->execute([':project_id' => $project_id]);
+        if ($projectStmt) {
+            $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
             $projectUserId = $projectData['project_user_id'];
             if ($projectUserId != $_SESSION['user_id']) {
                 echo "Keine berechtigung.";
@@ -40,11 +40,13 @@ if ($_SESSION["permission_level"] == 2) {
 require_once("log.php");
 
 
-$orderQ = "SELECT order_id FROM `time` WHERE time_id = '$time_id'";
-$order_id = $mysql->query($orderQ)->fetchColumn();
+$orderStmt = $mysql->prepare('SELECT order_id FROM `time` WHERE time_id = :time_id');
+$orderStmt->execute([':time_id' => $time_id]);
+$order_id = $orderStmt->fetchColumn();
 
-$timeQ = "SELECT duration FROM `time` WHERE time_id = '$time_id'";
-$timeM = $mysql->query($timeQ)->fetchColumn();
+$durationStmt = $mysql->prepare('SELECT duration FROM `time` WHERE time_id = :time_id');
+$durationStmt->execute([':time_id' => $time_id]);
+$timeM = $durationStmt->fetchColumn();
 $time = round($timeM / 60);
 
 $selectOrderAmountQuery = "SELECT order_amount FROM `order` WHERE order_id = :order_id";
@@ -54,8 +56,9 @@ $stmt->execute();
 $existingAmount = $stmt->fetchColumn();
 
 // Berechne den Stundenlohn
-$countQ = "SELECT order_hourly_wage FROM `order` WHERE order_id = '$order_id'";
-$hourlyWage = $mysql->query($countQ)->fetchColumn();
+$wageStmt = $mysql->prepare('SELECT order_hourly_wage FROM `order` WHERE order_id = :order_id');
+$wageStmt->execute([':order_id' => $order_id]);
+$hourlyWage = $wageStmt->fetchColumn();
 
 $subAmount = $hourlyWage * $time;
 

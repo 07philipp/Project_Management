@@ -19,12 +19,14 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     $projectNumber = $_GET['id'];
     include('../mysql.php');
 
-    $projectQuery = "SELECT project_name, project_client_id, project_address, project_description, project_due_date, project_created_date
-        FROM project
-        WHERE project_id = '$projectNumber'";
-    $projectResult = $mysql->query($projectQuery);
-    if ($projectResult) {
-        $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+    $projectStmt = $mysql->prepare(
+        'SELECT project_name, project_client_id, project_address, project_description, project_due_date, project_created_date
+         FROM project
+         WHERE project_id = :project_id'
+    );
+    $projectStmt->execute([':project_id' => $projectNumber]);
+    if ($projectStmt) {
+        $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
         $projectName = $projectData['project_name'];
         $projectClientId = $projectData['project_client_id'];
         $projectAddress = $projectData['project_address'];
@@ -32,29 +34,31 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
         $projectDate = $projectData['project_due_date'];
         $createdDate = $projectData['project_created_date'];
 
-        $clientQuery = "SELECT *
-            FROM client
-            WHERE client_id = '$projectClientId'";
-        $clientResult = $mysql->query($clientQuery);
-        $clientData = $clientResult->fetch(PDO::FETCH_ASSOC);
+        $clientStmt = $mysql->prepare('SELECT * FROM client WHERE client_id = :client_id');
+        $clientStmt->execute([':client_id' => $projectClientId]);
+        $clientData = $clientStmt->fetch(PDO::FETCH_ASSOC);
         $clientName = $clientData['client_name'];
         $clientAdress = $clientData['client_address'];
         $clientLocation = $clientData['client_location'];
         $clientCompany = $clientData['client_company'];
         $clientGender = $clientData['client_gender'];
 
-        // Orders abfragen
-        $ordersQuery = "SELECT o.order_id, o.order_order, o.order_amount, o.order_hourly_wage
-                    FROM `order` o
-                    WHERE o.order_project_id = '$projectNumber'";
-        $ordersResult = $mysql->query($ordersQuery);
+        $ordersStmt = $mysql->prepare(
+            'SELECT o.order_id, o.order_order, o.order_amount, o.order_hourly_wage
+             FROM `order` o
+             WHERE o.order_project_id = :project_id'
+        );
+        $ordersStmt->execute([':project_id' => $projectNumber]);
+        $ordersResult = $ordersStmt;
 
-        // Times abfragen
-        $timesQuery = "SELECT order_id, SUM(duration) AS total_duration
-                    FROM `time`
-                    WHERE project_id = '$projectNumber'
-                    GROUP BY order_id";
-        $timeResult = $mysql->query($timesQuery);
+        $timesStmt = $mysql->prepare(
+            'SELECT order_id, SUM(duration) AS total_duration
+             FROM `time`
+             WHERE project_id = :project_id
+             GROUP BY order_id'
+        );
+        $timesStmt->execute([':project_id' => $projectNumber]);
+        $timeResult = $timesStmt;
 
         // Arrays zur Speicherung der Ergebnisse
         $orders = array();
@@ -182,7 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
         function saveChangesDiscount(inputField) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '../get_amount.php?project_id=' + encodeURIComponent('<?php echo $projectNumber; ?>'), true);
+            xhr.open('GET', '../get_amount.php?project_id=' + encodeURIComponent(<?= pm_json_script($projectNumber) ?>), true);
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     var invoiceAmount = parseFloat(xhr.responseText) || 0;
@@ -234,7 +238,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
 <body>
     <h1>Auftragsformular</h1>
-    <h2><?php echo "$projectName"; ?></h2>
+    <h2><?php echo h($projectName); ?></h2>
     <form action="../generate_word.php" method="POST">
         <table class="not" id="not">
             <tr>
@@ -252,18 +256,18 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                     <tr>
                         <td>
                             <ul>
-                                <input class='input' id='order' name='order_order' type='text' value='" . $order['order_order'] . "' onchange='saveChangesOrder(this, " . $order['order_id'] . ")' />
+                                <input class='input' id='order' name='order_order' type='text' value='" . h($order['order_order']) . "' onchange='saveChangesOrder(this, " . pm_json_script($order['order_id']) . ")' />
                             </ul>
                         </td>
                         <td>
-                            <input class='input' id='time" . $count . "' name='order_time" . $count . "' type='number' value='" . $orderTime . "' readonly/>
+                            <input class='input' id='time" . $count . "' name='order_time" . $count . "' type='number' value='" . h($orderTime) . "' readonly/>
                         </td>
                         <td>
-                            <input class='input' id='price" . $count . "' name='order_price" . $count . "' type='number' value='" . $order['order_hourly_wage'] . "' onchange='saveChangesOrder(this, " . $order['order_id'] . ")'/>
+                            <input class='input' id='price" . $count . "' name='order_price" . $count . "' type='number' value='" . h($order['order_hourly_wage']) . "' onchange='saveChangesOrder(this, " . pm_json_script($order['order_id']) . ")'/>
                         </td>
                         <td>
                             <ul>
-                                <input class='input' id='amount" . $count . "' name='order_amount' type='number' value='" . $order['order_amount'] . "' onchange='saveChangesOrder(this, " . $order['order_id'] . ")' />
+                                <input class='input' id='amount" . $count . "' name='order_amount' type='number' value='" . h($order['order_amount']) . "' onchange='saveChangesOrder(this, " . pm_json_script($order['order_id']) . ")' />
                             </ul>
                         </td>
                     </tr>
@@ -284,7 +288,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                 <input type="text" id="searchInput" class="search-input" onchange="searchFields(this)" placeholder="Suchen...">
                 <select style="margin-bottom: 10px;" style="margin-bottom: 10px; margin-left: 15px;" id="client_id" name="client_id" class="custom-select" onchange="toggleNewClientFields(this)" required>
                     <?php
-                    echo "<option class='search-option used' id='client_id' name='client_id' value='" . $clientData['client_id'] . "'>" . $clientName . "</option>";
+                    echo "<option class='search-option used' id='client_id' name='client_id' value='" . h($clientData['client_id']) . "'>" . h($clientName) . "</option>";
 
                     try {
                         $selectQuery = "SELECT * FROM client";
@@ -295,7 +299,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
 
                             foreach ($clients as $client) {
                                 if ($client['client_id'] != $clientData['client_id']) {
-                                    echo "<option class='search-option' id='client_id' name='client_id' value='" . $client['client_id'] . "'>" . $client['client_name'] . "</option>";
+                                    echo "<option class='search-option' id='client_id' name='client_id' value='" . h($client['client_id']) . "'>" . h($client['client_name']) . "</option>";
                                 }
                             }
                         }
@@ -307,16 +311,16 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
             </div>
 
             <label style="display: block; margin-bottom: 5px;" for="name">Kundenname:</label>
-            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="name" id="name" value="<?php echo $clientName; ?>" onchange="saveChanges(this)" required /><br>
+            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="name" id="name" value="<?php echo h($clientName); ?>" onchange="saveChanges(this)" required /><br>
 
             <label style="display: block; margin-bottom: 5px;" for="address">Adresse:</label>
-            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="address" id="address" value="<?php echo $clientAdress; ?>" onchange="saveChanges(this)" required /><br>
+            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="address" id="address" value="<?php echo h($clientAdress); ?>" onchange="saveChanges(this)" required /><br>
 
             <label style="display: block; margin-bottom: 5px;" for="complocationany">Ort:</label>
-            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="location" id="location" value="<?php echo $clientLocation; ?>" onchange="saveChanges(this)" required /><br>
+            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="location" id="location" value="<?php echo h($clientLocation); ?>" onchange="saveChanges(this)" required /><br>
 
             <label style="display: block; margin-bottom: 5px;" for="company">Unternehmen:</label>
-            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="company" id="company" value="<?php echo $clientCompany; ?>" onchange="saveChanges(this)" required /><br>
+            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="company" id="company" value="<?php echo h($clientCompany); ?>" onchange="saveChanges(this)" required /><br>
 
             <label style="margin-right: 100%;" for="gender">Geschlecht:</label>
             <input style="margin-top: 10px;" type="radio" id="male" name="gender" value="Männlich" onchange="saveChanges(this)" <?php if ($clientGender == 'Männlich') {
@@ -346,7 +350,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                 <input onchange="saveChangesDiscount(this);" style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="number" id="discount_amount_num" name="discount_amount_num"><br>
             </a>
 
-            <input type="hidden" name="projectNumber" id="projectNumber" value='<?php echo "$projectNumber"; ?> ' /><br>
+            <input type="hidden" name="projectNumber" id="projectNumber" value="<?php echo h($projectNumber); ?>" /><br>
             <button class='link' type="submit">Rechnung schreiben</button>
 
         </div>
@@ -354,7 +358,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
     <?php if (isset($_GET['back'])) { ?>
         <a class="link" href='../'>Zurück</a>
     <?php } else { ?>
-        <a class="link" href='../projects/?id=<?php echo "$projectNumber"; ?>'>Zurück</a>
+        <a class="link" href='../projects/?id=<?php echo h($projectNumber); ?>'>Zurück</a>
     <?php } ?>
 </body>
 

@@ -12,12 +12,12 @@ if ($_SESSION["permission_level"] == 2) {
         $project_id = $_GET['id'];
         include("../mysql.php");
 
-        $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$project_id'";
-        $projectResult = $mysql->query($projectQuery);
-        if ($projectResult) {
-            $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+        $projectStmt = $mysql->prepare(
+            'SELECT project_user_id FROM project WHERE project_id = :project_id'
+        );
+        $projectStmt->execute([':project_id' => $project_id]);
+        if ($projectStmt) {
+            $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
             $projectUserId = $projectData['project_user_id'];
             if ($projectUserId != $_SESSION['user_id']) {
                 echo "Keine berechtigung.";
@@ -36,12 +36,15 @@ if ($_SESSION["permission_level"] == 2) {
     include("../mysql.php");
 }
 
-$timeQuery = "SELECT u.user_id, u.user_name, o.order_order, t.start_time, t.end_time, t.duration, t.order_id, t.time_id
-            FROM `time` t 
-            JOIN `user` u ON t.user_id = u.user_id 
-            JOIN `order` o ON t.order_id = o.order_id 
-            WHERE t.project_id =  '$project_id'";
-$timeResult = $mysql->query($timeQuery);
+$timeStmt = $mysql->prepare(
+    'SELECT u.user_id, u.user_name, o.order_order, t.start_time, t.end_time, t.duration, t.order_id, t.time_id
+     FROM `time` t
+     JOIN `user` u ON t.user_id = u.user_id
+     JOIN `order` o ON t.order_id = o.order_id
+     WHERE t.project_id = :project_id'
+);
+$timeStmt->execute([':project_id' => $project_id]);
+$timeResult = $timeStmt;
 
 $times = array();
 
@@ -64,11 +67,9 @@ if ($timeResult) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Fetch error message from PHP session
-            var errorMessage = "<?php echo isset($_SESSION['error_message']) ? addslashes($_SESSION['error_message']) : ''; ?>";
+            var errorMessage = <?= pm_json_script(pm_take_flash_message()) ?>;
             if (errorMessage) {
                 showNotification(errorMessage);
-                // Clear the session error message
-                <?php unset($_SESSION['error_message']); ?>
             }
         });
 
@@ -106,21 +107,21 @@ if ($timeResult) {
             foreach ($times as $time) {
                 if ($time['end_time'] !== null) { ?>
                     <tr>
-                        <td><a href="../users/?id=<?php echo $time['user_name']; ?>"><?php echo $time['user_name']; ?></a></td>
-                        <td><?php echo $time['order_order']; ?></td>
+                        <td><a href="../users/?id=<?php echo h($time['user_name']); ?>"><?php echo h($time['user_name']); ?></a></td>
+                        <td><?php echo h($time['order_order']); ?></td>
 
-                        <td><input name="start" id="<?php echo $time['time_id']; ?>" type="datetime-local"
-                                value="<?php echo date("Y-m-d\TH:i", strtotime($time['start_time'])); ?>"
-                                onchange="saveChanges(this, '<?php echo $project_id; ?>')"></td>
+                        <td><input name="start" id="<?php echo h($time['time_id']); ?>" type="datetime-local"
+                                value="<?php echo h(date('Y-m-d\TH:i', strtotime($time['start_time']))); ?>"
+                                onchange="saveChanges(this, <?php echo pm_json_script($project_id); ?>)"></td>
 
-                        <td><input name="end" id="<?php echo $time['time_id']; ?>" type="datetime-local"
-                                value="<?php echo date("Y-m-d\TH:i", strtotime($time['end_time'])); ?>"
-                                onchange="saveChanges(this, '<?php echo $project_id; ?>')"></td>
-                        <td><?php echo $time['duration']; ?></td>
+                        <td><input name="end" id="<?php echo h($time['time_id']); ?>" type="datetime-local"
+                                value="<?php echo h(date('Y-m-d\TH:i', strtotime($time['end_time']))); ?>"
+                                onchange="saveChanges(this, <?php echo pm_json_script($project_id); ?>)"></td>
+                        <td><?php echo h($time['duration']); ?></td>
                         <td>
                             <form action="../delete_time.php" method="post" style="display:inline;">
-                                <input type="hidden" name="id" value="<?php echo $time['time_id']; ?>">
-                                <input type="hidden" name="p_id" value="<?php echo $project_id; ?>">
+                                <input type="hidden" name="id" value="<?php echo h($time['time_id']); ?>">
+                                <input type="hidden" name="p_id" value="<?php echo h($project_id); ?>">
                                 <button type="submit">Löchen</button>
                             </form>
                         </td>
@@ -132,7 +133,7 @@ if ($timeResult) {
         ?>
     </table>
     <br>
-    <a class="link" href="../projects/?id=<?php echo $project_id; ?>">Fertig</a>
+    <a class="link" href="../projects/?id=<?php echo h($project_id); ?>">Fertig</a>
 </body>
 
 </html>

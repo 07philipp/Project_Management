@@ -15,12 +15,12 @@ if ($_SESSION["permission_level"] == 2) {
 
         include("mysql.php");
 
-        $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$project_id'";
-        $projectResult = $mysql->query($projectQuery);
-        if ($projectResult) {
-            $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+        $projectStmt = $mysql->prepare(
+            'SELECT project_user_id FROM project WHERE project_id = :project_id'
+        );
+        $projectStmt->execute([':project_id' => $project_id]);
+        if ($projectStmt) {
+            $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
             $projectUserId = $projectData['project_user_id'];
             if ($projectUserId != $_SESSION['user_id']) {
                 echo "Keine berechtigung.";
@@ -63,8 +63,9 @@ $start = strtotime($_POST['start']);
 $end = strtotime($_POST['end']);
 
 // Berechne den Stundenlohn
-$countQ = "SELECT order_hourly_wage FROM `order` WHERE order_id = '$order_id'";
-$hourlyWage = $mysql->query($countQ)->fetchColumn();
+$wageStmt = $mysql->prepare('SELECT order_hourly_wage FROM `order` WHERE order_id = :order_id');
+$wageStmt->execute([':order_id' => $order_id]);
+$hourlyWage = $wageStmt->fetchColumn();
 
 // Berechne die Differenz in Sekunden
 $timeDifferenceInSeconds = $end - $start;

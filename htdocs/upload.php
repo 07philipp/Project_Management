@@ -9,14 +9,13 @@ if (!isset($_SESSION["user_id"])) {
 if ($_SESSION["permission_level"] == 2) {
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
         include("mysql.php");
-        $orderData = $orderResult->fetch(PDO::FETCH_ASSOC);
         $projectNumber = $_POST['p_id'];
-        $projectQuery = "SELECT project_user_id 
-                FROM project
-                WHERE project_id = '$projectNumber'";
-        $projectResult = $mysql->query($projectQuery);
-        if ($projectResult) {
-            $projectData = $projectResult->fetch(PDO::FETCH_ASSOC);
+        $projectStmt = $mysql->prepare(
+            'SELECT project_user_id FROM project WHERE project_id = :project_id'
+        );
+        $projectStmt->execute([':project_id' => $projectNumber]);
+        if ($projectStmt) {
+            $projectData = $projectStmt->fetch(PDO::FETCH_ASSOC);
             $projectUserId = $projectData['project_user_id'];
             if ($projectUserId != $_SESSION['user_id']) {
                 echo "Keine berechtigung.";
@@ -33,6 +32,10 @@ if ($_SESSION["permission_level"] == 2) {
 }
 require_once "log.php";
 
+if (!isset($mysql)) {
+    include 'mysql.php';
+}
+
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 $project_id = isset($_POST['p_id']) ? $_POST['p_id'] : '';
 $projectFolder = "projects/uploads/";
@@ -47,7 +50,10 @@ if (!is_dir($uploadDir)) {
 // Aktion: Datei hochladen
 if ($action == 'create') {
     // Abrufen der zulässigen Dateiendungen
-    $extensionsStmt = $mysql->query("SELECT setting FROM settings WHERE setting_type = 'allowed_extensions'");
+    $extensionsStmt = $mysql->prepare(
+        'SELECT setting FROM settings WHERE setting_type = :setting_type'
+    );
+    $extensionsStmt->execute([':setting_type' => 'allowed_extensions']);
     $allowedExtensions = explode(',', $extensionsStmt->fetchColumn());
     if (isset($_FILES['fileToUpload'])) {
         $fileName = basename($_FILES['fileToUpload']['name']);
@@ -64,7 +70,7 @@ if ($action == 'create') {
 
         // Datei hochladen
         if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $targetFile)) {
-            $_SESSION['error_message'] = "Die Datei " . htmlspecialchars($fileName) . " wurde erfolgreich hochgeladen.";
+            $_SESSION['error_message'] = "Die Datei " . h($fileName) . " wurde erfolgreich hochgeladen.";
             logSQL($mysql, $_SESSION['username'], "project $project_id upload $fileName");
         } else {
             $_SESSION['error_message'] = "Fehler beim Hochladen der Datei.";
@@ -106,7 +112,7 @@ elseif ($action == 'delete') {
 
         if (file_exists($filePath)) {
             unlink($filePath); // Datei löschen
-            $_SESSION['error_message'] = "Datei " . htmlspecialchars($fileName) . " wurde erfolgreich gelöscht.";
+            $_SESSION['error_message'] = "Datei " . h($fileName) . " wurde erfolgreich gelöscht.";
             logSQL($mysql, $_SESSION['username'], "project $project_id delete $fileName");
         } else {
             $_SESSION['error_message'] = "Datei nicht gefunden.";

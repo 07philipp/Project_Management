@@ -13,18 +13,17 @@ if ($_SESSION["permission_level"] <= 2) {
                       </script>";
     exit;
 }
-require_once '../vendor/autoload.php'; // Composer Autoloader für PHPWord
+require_once '../vendor/autoload.php';
 
-include "mysql.php";
-require_once "log.php";
+include 'mysql.php';
+require_once 'log.php';
 
 use PhpOffice\PhpWord\TemplateProcessor;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['projectNumber'])) {
     $projectNumber = $_POST['projectNumber'];
-    include('mysql.php');
 
-    $projectQuery = "SELECT project_name, project_client_id, project_address, project_description 
+    $projectQuery = "SELECT project_name, project_client_id, project_address, project_description
         FROM project
         WHERE project_id = :projectNumber";
     $stmt = $mysql->prepare($projectQuery);
@@ -53,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['projectNumber'])) {
             $orderTime = $_POST['order_time' . ($index + 1)];
             $preisList .= $order['order_amount'] . "\n";
             $lesitungList .= $order['order_order'] . "\n";
-            $leistungsbeschreibungList .= (($orderTime * $orderPrice == $order['order_amount']) ? ($orderTime . " Stunde" . ($orderTime = 1 ? "" : "n") . " je " . $orderPrice . "€") : "") . "\n";
+            $leistungsbeschreibungList .= (($orderTime * $orderPrice == $order['order_amount']) ? ($orderTime . " Stunde" . ($orderTime == 1 ? "" : "n") . " je " . $orderPrice . "€") : "") . "\n";
             $invoiceAmount += intval($order['order_amount']);
         }
     } else {
@@ -99,7 +98,6 @@ switch ($clientGender) {
         break;
 
     default:
-        // Falls kein Geschlecht angegeben ist
         $clientName = $client;
         $clientName_A = "Sehr geehrte/r " . $clientName;
         break;
