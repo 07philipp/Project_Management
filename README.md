@@ -109,5 +109,4 @@ http://localhost/setup.php
 2. Folgen Sie den Anweisungen auf der Benutzeroberfläche. Das Skript initialisiert die Datenbankstruktur und generiert die finale `config.php`.
 3. **Wichtig:** Löschen Sie die Datei `setup.php` nach erfolgreicher Installation umgehend aus Sicherheitsgründen vom Server.
 
-```
 
