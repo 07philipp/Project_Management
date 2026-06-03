@@ -247,20 +247,38 @@ $timeUser = kv($mysql->query("
 
 
 <script>
-const donut = (id, labels, data) =>
-    new Chart(id, {
+// Eine schöne, moderne Farbpalette für deine Graphen
+const colors = [
+    'rgba(54, 162, 235, 0.8)',   // Blau
+    'rgba(255, 99, 132, 0.8)',   // Rot/Rosa
+    'rgba(75, 192, 192, 0.8)',   // Türkis
+    'rgba(255, 206, 86, 0.8)',   // Gelb
+    'rgba(153, 102, 255, 0.8)',  // Lila
+    'rgba(255, 159, 64, 0.8)',   // Orange
+    'rgba(46, 204, 113, 0.8)'    // Grün
+];
+
+const borderColors = colors.map(c => c.replace('0.8', '1'));
+
+// Helfer-Funktionen mit sicherer Element-Auswahl per document.getElementById
+const donut = (id, labels, data) => {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    return new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
+                backgroundColor: colors.slice(0, data.length),
+                borderColor: borderColors.slice(0, data.length),
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
-            cutout: '65%',           // 👈 Donut-Loch
+            maintainAspectRatio: false, // Erlaubt CSS die Höhenkontrolle
+            cutout: '65%',
             plugins: {
                 legend: {
                     position: 'bottom'
@@ -268,25 +286,61 @@ const donut = (id, labels, data) =>
             }
         }
     });
+};
 
-const line=(id,l,d)=>new Chart(id,{type:'line',data:{labels:l,datasets:d}})
-const bar=(id,l,d)=>new Chart(id,{type:'bar',data:{labels:l,datasets:d}})
+const line = (id, l, d) => {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    // Farben für die Linien dynamisch zuweisen
+    d.forEach((dataset, index) => {
+        dataset.borderColor = borderColors[index % borderColors.length];
+        dataset.backgroundColor = colors[index % colors.length];
+        dataset.tension = 0.2; // Macht die Linien leicht geschwungen
+    });
+    return new Chart(ctx, {
+        type: 'line',
+        data: { labels: l, datasets: d },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+};
 
-const chartStatus = donut(c1,<?=json_encode(array_keys($statusNow))?>,<?=json_encode(array_values($statusNow))?>)
+const bar = (id, l, d) => {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    d.forEach((dataset, index) => {
+        dataset.backgroundColor = colors[index % colors.length];
+        dataset.borderColor = borderColors[index % borderColors.length];
+        dataset.borderWidth = 1;
+    });
+    return new Chart(ctx, {
+        type: 'bar',
+        data: { labels: l, datasets: d },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+};
 
-const chartTimeline = line(c2,<?=json_encode(array_keys($completedDay))?>,[
-{label:'Abgeschlossen',data:<?=json_encode(array_values($completedDay))?>},
-{label:'Rechnung gesendet',data:<?=json_encode(array_values($billSend))?>},
-{label:'Bezahlt',data:<?=json_encode(array_values($paidDay))?>}
-])
+// WICHTIG: IDs jetzt als Strings übergeben!
+const chartStatus = donut('c1', <?=json_encode(array_keys($statusNow))?>, <?=json_encode(array_values($statusNow))?>);
 
-donut(c3,<?=json_encode(array_keys($statusActive))?>,<?=json_encode(array_values($statusActive))?>)
-line(c4,<?=json_encode(array_keys($createdDay))?>,[{label:'Projekte erstellt',data:<?=json_encode(array_values($createdDay))?>}])
-donut(c5,<?=json_encode(array_keys($projectValue))?>,<?=json_encode(array_values($projectValue))?>)
-donut(c6,<?=json_encode(array_keys($projectTime))?>,<?=json_encode(array_values($projectTime))?>)
-line(c7,<?=json_encode(array_keys($paidMoneyDay))?>,[{label:'€ bezahlt',data:<?=json_encode(array_values($paidMoneyDay))?>}])
-donut(c8,<?=json_encode(array_keys($moneyStatus))?>,<?=json_encode(array_values($moneyStatus))?>)
-bar(c9,<?=json_encode(array_keys($timeUser))?>,[{label:'Stunden',data:<?=json_encode(array_values($timeUser))?>}])
+const chartTimeline = line('c2', <?=json_encode(array_keys($completedDay))?>, [
+    { label: 'Abgeschlossen', data: <?=json_encode(array_values($completedDay))?> },
+    { label: 'Rechnung gesendet', data: <?=json_encode(array_values($billSend))?> },
+    { label: 'Bezahlt', data: <?=json_encode(array_values($paidDay))?> }
+]);
+
+donut('c3', <?=json_encode(array_keys($statusActive))?>, <?=json_encode(array_values($statusActive))?>);
+line('c4', <?=json_encode(array_keys($createdDay))?>, [{ label: 'Projekte erstellt', data: <?=json_encode(array_values($createdDay))?> }]);
+donut('c5', <?=json_encode(array_keys($projectValue))?>, <?=json_encode(array_values($projectValue))?>);
+donut('c6', <?=json_encode(array_keys($projectTime))?>, <?=json_encode(array_values($projectTime))?>);
+line('c7', <?=json_encode(array_keys($paidMoneyDay))?>, [{ label: '€ bezahlt', data: <?=json_encode(array_values($paidMoneyDay))?> }]);
+donut('c8', <?=json_encode(array_keys($moneyStatus))?>, <?=json_encode(array_values($moneyStatus))?>);
+bar('c9', <?=json_encode(array_keys($timeUser))?>, [{ label: 'Stunden', data: <?=json_encode(array_values($timeUser))?> }]);
 </script>
 
 </body>
