@@ -333,8 +333,9 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['id'])) {
                                                                                                                                                             echo 'checked';
                                                                                                                                                         } ?> /> Familie                                                                                                                                            
 
-            <label style="display: block; margin-bottom: 5px;" for="company">Zeitraum:</label>
-            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="period" id="period" value="<?php echo date('d.m.Y', $createdDate) . ' - ' . date('d.m.Y', strtotime($projectDate)); ?>" required /><br>
+            <label style="display: block; margin-bottom: 5px;" for="period">Zeitraum:</label>
+            <input style="width: 100%;max-width: 300px;padding: 8px;margin-bottom: 10px;border: 1px solid #ccc;border-radius: 4px;" type="text" name="period" id="period" value="<?php echo date('d.m.Y', strtotime($createdDate)) . ' - ' . date('d.m.Y', strtotime($projectDate)); ?>" required /><br>
+            
             <div>
                 <button class="link" type="button" onclick="toggleForm()">Rabatt hinzufügen</button>
             </div>
