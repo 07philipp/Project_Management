@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['b'])) {
         <label for="password">Password:</label>
         <div style="position: relative;">
           <input type="password" id="password" name="password" placeholder="Passwort" required>
-          <span id="togglePw1" onclick="togglePasswordLogin()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">👁</span>
+          <span id="togglePw1" onclick="togglePasswordLogin()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">show</span>
         </div>
         <div class="comb-container">
           <label for="remember">Angemeldet bleiben</label>
