@@ -111,47 +111,38 @@ function parseProjectId(id) {
 
 function sortProjects(mode) {
     const table = document.getElementById('projectTable');
+    if (!table) return;
+
+    // Holt alle Zeilen außer der Kopfzeile
     const rows = Array.from(table.querySelectorAll('tr')).slice(1);
 
     rows.sort((a, b) => {
-
         const tdA = a.getElementsByTagName('td');
         const tdB = b.getElementsByTagName('td');
 
-        // ID sortieren
-	if (mode === 'id_asc' || mode === 'id_desc') {
+        // ID sortieren (Alphanumerisch & Intelligent)
+        if (mode === 'id_asc' || mode === 'id_desc') {
+            const idA = tdA[0].textContent.trim();
+            const idB = tdB[0].textContent.trim();
 
-    	const idA = parseProjectId(tdA[0].textContent.trim());
-    	const idB = parseProjectId(tdB[0].textContent.trim());
-
-    	// zuerst Gruppe vergleichen (A25, A26 ...)
-    	if (idA.group !== idB.group) {
-        	return mode === 'id_asc'
-            	? idA.group - idB.group
-            	: idB.group - idA.group;
-    	}
-
-    	// dann Projektnummer vergleichen
-    	return mode === 'id_asc'
-        	? idA.number - idB.number
-        	: idB.number - idA.number;
-	}
+            // localeCompare mit numeric: true sortiert "A2", "A10", "A11" etc. absolut korrekt
+            return mode === 'id_asc'
+                ? idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' })
+                : idB.localeCompare(idA, undefined, { numeric: true, sensitivity: 'base' });
+        }
 
         // Name sortieren
         if (mode === 'name_asc' || mode === 'name_desc') {
-
             const nameA = tdA[1].textContent.trim().toLowerCase();
             const nameB = tdB[1].textContent.trim().toLowerCase();
 
             if (nameA < nameB) return mode === 'name_asc' ? -1 : 1;
             if (nameA > nameB) return mode === 'name_asc' ? 1 : -1;
-
             return 0;
         }
 
         // Datum sortieren
         if (mode === 'date_asc' || mode === 'date_desc') {
-
             const dateA = parseGermanDate(tdA[6].textContent);
             const dateB = parseGermanDate(tdB[6].textContent);
 
@@ -159,13 +150,12 @@ function sortProjects(mode) {
             if (!dateA) return 1;
             if (!dateB) return -1;
 
-            return mode === 'date_asc'
-                ? dateA - dateB
-                : dateB - dateA;
+            return mode === 'date_asc' ? dateA - dateB : dateB - dateA;
         }
 
         return 0;
     });
 
+    // Sortierte Zeilen wieder in die Tabelle einfügen
     rows.forEach(row => table.appendChild(row));
 }
