@@ -20,11 +20,11 @@ function togglePassword() {
     if (pw1.type === "password") {
         pw1.type = "text";
         pw2.type = "text";
-        icon1.textContent = "🔒"; // Schloss zu
+        icon1.textContent = "hide"; 
     } else {
         pw1.type = "password";
         pw2.type = "password";
-        icon1.textContent = "👁"; // Auge offen
+        icon1.textContent = "show"; 
     }
 }
 
@@ -34,9 +34,9 @@ function togglePasswordLogin() {
 
     if (pw1.type === "password") {
         pw1.type = "text";
-        icon1.textContent = "🔒"; // Schloss zu
+        icon1.textContent = "hide"; 
     } else {
         pw1.type = "password";
-        icon1.textContent = "👁"; // Auge offen
+        icon1.textContent = "show"; 
     }
 }
