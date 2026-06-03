@@ -33,7 +33,6 @@ The application enforces a strict separation between the publicly accessible web
 │   ├── settings/                   # Application settings and configuration panels
 │   ├── users/                      # User administration and role management
 │   ├── write_bill/                 # Invoice generation and billing preparation
-│   │
 │   ├── add_client.php              # Create new client records
 │   ├── add_project.php             # Create new projects
 │   ├── add_time.php                # Create new time entries
