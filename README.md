@@ -90,7 +90,7 @@ sudo chmod -R 755 /var/www/html
 
 1. Installieren Sie über das Paket-Zentrum die **Web Station**, **PHP** sowie **MariaDB**.
 2. Laden Sie den Inhalt des `htdocs`-Ordners sowie die Dateien `backup_cron.php`, `config.php` und `setup.php` in das Verzeichnis `/web`.
-3. Kopieren Sie den Ordner `vendor` und `libraries` nach `/web/vendor`.
+3. Kopieren Sie ebenso den Ordner `vendor` und `libraries` nach `/web`.
 
 ---
 
